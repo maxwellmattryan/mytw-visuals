@@ -5,3 +5,17 @@
 **/.vscode/
 
 **/.idea/
+
+#### #### #### ####
+#### Project
+#### #### #### ####
+node_modules/
+dist/
+.DS_Store
+
+#### #### #### ####
+#### Media exports
+#### #### #### ####
+*.webm
+*.tar
+*.gif

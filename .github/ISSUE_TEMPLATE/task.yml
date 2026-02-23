@@ -9,8 +9,8 @@ body:
 
   - type: markdown
     attributes:
-        value: |
-          This form should be used by only official maintainers to create new development tasks. If applicable, please assign to a milestone and/or task management project. 
+      value: |
+        This form should be used by only official maintainers to create new development tasks. If applicable, please assign to a milestone and/or task management project.
 
   - type: textarea
     id: description

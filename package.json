@@ -1,0 +1,35 @@
+{
+	"name": "mytw-visuals",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "vite build",
+		"preview": "vite preview",
+		"new": "node scripts/new-sketch.js",
+		"lint": "eslint .",
+		"format": "prettier --write .",
+		"pre-commit": "lint-staged",
+		"prepare": "yarn prepare:husky",
+		"prepare:husky": "husky install"
+	},
+	"dependencies": {
+		"ccapture.js-npmfixed": "1.1.0",
+		"p5": "1.11.3"
+	},
+	"devDependencies": {
+		"@eslint/js": "9.20.0",
+		"eslint": "9.20.0",
+		"eslint-config-prettier": "10.0.1",
+		"eslint-plugin-prettier": "5.2.3",
+		"glob": "11.0.1",
+		"globals": "15.15.0",
+		"husky": "8.0.3",
+		"prettier": "3.5.2",
+		"vite": "6.1.0"
+	},
+	"lint-staged": {
+		"*.js": "eslint --fix"
+	}
+}

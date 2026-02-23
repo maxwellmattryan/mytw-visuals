@@ -1,6 +1,6 @@
 ## Summary
 
-> Please summarize your changes, describing *what* they are and *why* they were made.
+> Please summarize your changes, describing _what_ they are and _why_ they were made.
 
 ...
 

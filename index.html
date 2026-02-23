@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>mytw-visuals</title>
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+			body {
+				font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+				background: #0a0a0a;
+				color: #e0e0e0;
+				padding: 2rem;
+				min-height: 100vh;
+			}
+			h1 {
+				font-size: 1.25rem;
+				font-weight: 400;
+				margin-bottom: 2rem;
+				color: #666;
+				letter-spacing: 0.05em;
+			}
+			.sketches {
+				display: flex;
+				flex-direction: column;
+				gap: 0.25rem;
+			}
+			a {
+				color: #e0e0e0;
+				text-decoration: none;
+				padding: 0.5rem 0.75rem;
+				border-radius: 4px;
+				font-size: 0.875rem;
+				transition: background 0.15s;
+			}
+			a:hover {
+				background: #1a1a1a;
+				color: #fff;
+			}
+			.empty {
+				color: #444;
+				font-style: italic;
+				font-size: 0.875rem;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>mytw-visuals</h1>
+		<div class="sketches" id="sketches">
+			<span class="empty">loading...</span>
+		</div>
+		<script type="module">
+			const container = document.getElementById('sketches')
+
+			// In dev, fetch from Vite plugin; in production, use inlined list.
+			const inlined = '__SKETCH_LIST__'
+			const sketches =
+				typeof inlined === 'string'
+					? await fetch('/__sketches.json')
+							.then((r) => r.json())
+							.catch(() => [])
+					: inlined
+
+			container.textContent = ''
+
+			if (sketches.length === 0) {
+				const span = document.createElement('span')
+				span.className = 'empty'
+				span.textContent = 'No sketches yet. Run: yarn new --name my-sketch'
+				container.appendChild(span)
+			} else {
+				sketches.forEach((s) => {
+					const a = document.createElement('a')
+					a.href = s.path
+					a.textContent = s.name
+					container.appendChild(a)
+				})
+			}
+		</script>
+	</body>
+</html>
