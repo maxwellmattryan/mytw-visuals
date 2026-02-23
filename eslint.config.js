@@ -31,6 +31,15 @@ export default [
 		},
 	},
 	{
+		files: ['lib/__tests__/**/*.js'],
+		languageOptions: {
+			globals: {
+				...globals.jest,
+				...globals.node,
+			},
+		},
+	},
+	{
 		ignores: ['dist/', 'node_modules/'],
 	},
 ]
