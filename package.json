@@ -13,7 +13,8 @@
 		"test": "node --experimental-vm-modules ./node_modules/.bin/jest",
 		"pre-commit": "lint-staged",
 		"prepare": "yarn prepare:husky",
-		"prepare:husky": "husky install"
+		"prepare:husky": "husky install",
+		"convert": "./scripts/convert.sh"
 	},
 	"dependencies": {
 		"ccapture.js-npmfixed": "1.1.0",
