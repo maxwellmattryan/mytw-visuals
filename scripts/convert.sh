@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Convert PNG frame tar → MP4 with iPhone-compatible H.264 encoding
-# Usage: ./scripts/convert.sh [-r <fps>] <input.tar>
+# Usage: ./scripts/convert.sh [-r <fps>] [-o <outdir>] <input.tar>
 
 set -euo pipefail
 
@@ -11,16 +11,18 @@ fi
 
 # Parse options
 fps=60
-while getopts "r:" opt; do
+outdir=""
+while getopts "r:o:" opt; do
 	case "$opt" in
 		r) fps="$OPTARG" ;;
-		*) echo "Usage: $0 [-r <fps>] <input.tar>" >&2; exit 1 ;;
+		o) outdir="$OPTARG" ;;
+		*) echo "Usage: $0 [-r <fps>] [-o <outdir>] <input.tar>" >&2; exit 1 ;;
 	esac
 done
 shift $((OPTIND - 1))
 
 if [ $# -lt 1 ]; then
-	echo "Usage: $0 [-r <fps>] <input.tar>" >&2
+	echo "Usage: $0 [-r <fps>] [-o <outdir>] <input.tar>" >&2
 	exit 1
 fi
 
@@ -31,7 +33,13 @@ if [ ! -f "$input" ]; then
 	exit 1
 fi
 
-output="${input%.tar}.mp4"
+basename="${input%.tar}"
+if [ -n "$outdir" ]; then
+	output="$outdir/$(basename "$basename").mp4"
+else
+	output="${basename}.mp4"
+fi
+
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
 

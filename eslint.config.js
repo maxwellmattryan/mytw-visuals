@@ -23,7 +23,7 @@ export default [
 		},
 	},
 	{
-		files: ['scripts/**/*.js'],
+		files: ['scripts/**/*.js', 'vite.config.js'],
 		languageOptions: {
 			globals: {
 				...globals.node,

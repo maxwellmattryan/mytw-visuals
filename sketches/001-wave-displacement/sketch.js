@@ -2,7 +2,7 @@ import p5 from 'p5'
 import { SIZES, createWebGLCanvas, centerCanvas } from '@lib/layout.js'
 import { compileFilterShader } from '@lib/shaders.js'
 import { createCapture } from '@lib/capture.js'
-import { fitImage } from '@lib/image.js'
+import { coverImage } from '@lib/image.js'
 
 // ---------------------------------------------------------------------------
 // CONFIG — tweak these values to adjust the effect
@@ -83,10 +83,10 @@ const sketch = (p) => {
 	}
 
 	p.setup = () => {
-		cnv = createWebGLCanvas(p, SIZES.SQUARE)
+		cnv = createWebGLCanvas(p, SIZES.STORY)
 		p.frameRate(CONFIG.fps)
 
-		gfx = p.createGraphics(SIZES.SQUARE.width, SIZES.SQUARE.height)
+		gfx = p.createGraphics(SIZES.STORY.width, SIZES.STORY.height)
 		shd = compileFilterShader(p, FRAG_WAVE_DISPLACEMENT)
 
 		cap = createCapture(cnv.elt, { framerate: CONFIG.fps })
@@ -113,7 +113,7 @@ const sketch = (p) => {
 
 		// Draw image to offscreen 2D buffer (flipY corrects WebGL texture coords)
 		gfx.background(0)
-		fitImage(gfx, img, { flipY: true })
+		coverImage(gfx, img, { flipY: true })
 
 		// Apply shader
 		p.shader(shd)
