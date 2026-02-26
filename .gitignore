@@ -16,7 +16,6 @@ dist/
 #### #### #### ####
 #### Media exports
 #### #### #### ####
-output/
 *.webm
 *.tar
 *.mp4

@@ -1,8 +1,7 @@
 import { resolve } from 'path'
-import { globSync } from 'glob'
-import { existsSync, mkdirSync, rmSync, writeFileSync } from 'fs'
-import { execFile } from 'child_process'
 import { homedir } from 'os'
+import { globSync } from 'glob'
+import { mkdirSync, writeFileSync } from 'fs'
 
 function sketchListPlugin() {
 	const VIRTUAL_PATH = '/__sketches.json'
@@ -44,44 +43,47 @@ function captureServerPlugin() {
 
 		configureServer(server) {
 			server.middlewares.use((req, res, next) => {
-				const match = req.method === 'POST' && req.url.startsWith('/api/capture/convert')
-				if (!match) return next()
+				if (req.method !== 'POST' || !req.url.startsWith('/api/capture/')) return next()
 
 				const url = new URL(req.url, 'http://localhost')
-				const fps = url.searchParams.get('fps') || '60'
-				const name = url.searchParams.get('name') || 'recording'
+				const session = url.searchParams.get('session')
+				const route = url.pathname
 
-				const chunks = []
-				req.on('data', (chunk) => chunks.push(chunk))
-				req.on('end', () => {
-					const tarData = Buffer.concat(chunks)
-					const outDir = resolve('output')
-					mkdirSync(outDir, { recursive: true })
+				if (route === '/api/capture/start') {
+					const fps = url.searchParams.get('fps') || '60'
+					const dir = resolve(homedir(), 'Downloads', 'mytw-captures', session)
+					mkdirSync(dir, { recursive: true })
+					writeFileSync(resolve(dir, 'meta.json'), JSON.stringify({ fps: Number(fps) }))
+					console.log(`[capture] Session started: ${dir}`)
+					res.setHeader('Content-Type', 'application/json')
+					res.end(JSON.stringify({ ok: true, dir }))
+					return
+				}
 
-					const tarPath = resolve(outDir, `${name}.tar`)
-					writeFileSync(tarPath, tarData)
-					console.log(`[capture] Saved ${tarPath}`)
-
-					const script = resolve('scripts/convert.sh')
-					const dlDir = resolve(homedir(), 'Downloads')
-					const dlPath = resolve(dlDir, `${name}.mp4`)
-					execFile(script, ['-r', fps, '-o', dlDir, tarPath], (err, stdout, stderr) => {
+				if (route === '/api/capture/frame') {
+					const frame = url.searchParams.get('frame') || '0'
+					const dir = resolve(homedir(), 'Downloads', 'mytw-captures', session)
+					const filename = String(frame).padStart(7, '0') + '.png'
+					const chunks = []
+					req.on('data', (chunk) => chunks.push(chunk))
+					req.on('end', () => {
+						writeFileSync(resolve(dir, filename), Buffer.concat(chunks))
 						res.setHeader('Content-Type', 'application/json')
-						if (err) {
-							console.error('[capture] Convert failed:', stderr || err.message)
-							res.statusCode = 500
-							res.end(JSON.stringify({ ok: false, error: stderr || err.message }))
-						} else if (!existsSync(dlPath)) {
-							console.error('[capture] Convert succeeded but MP4 not found')
-							res.statusCode = 500
-							res.end(JSON.stringify({ ok: false, error: 'MP4 not found after conversion' }))
-						} else {
-							rmSync(tarPath)
-							console.log(`[capture] Converted → ${dlPath}`)
-							res.end(JSON.stringify({ ok: true, mp4: dlPath }))
-						}
+						res.end(JSON.stringify({ ok: true }))
 					})
-				})
+					return
+				}
+
+				if (route === '/api/capture/stop') {
+					const dir = resolve(homedir(), 'Downloads', 'mytw-captures', session)
+					console.log(`[capture] Session complete: ${dir}`)
+					console.log(`[capture] Convert with: ./scripts/convert.sh ${dir}`)
+					res.setHeader('Content-Type', 'application/json')
+					res.end(JSON.stringify({ ok: true, dir }))
+					return
+				}
+
+				next()
 			})
 		},
 	}
