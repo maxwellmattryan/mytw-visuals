@@ -8,30 +8,31 @@ import { coverImage } from '@lib/image.js'
 // CONFIG — tweak these values to adjust the effect
 // ---------------------------------------------------------------------------
 const CONFIG = {
-	// Wave displacement (irrational ratios = organic, non-repeating motion)
+	// Wave displacement
 	primaryFreq: 3.0, // sine wave cycles across image
-	primarySpeed: 0.8, // drift speed
+	primarySpeed: Math.PI / 4, // 1 cycle per loop (speed × 8s = 2π)
 	primaryAmplitude: 0.018, // UV displacement amount (0.01–0.03 range)
 	secondaryFreq: 2.0,
-	secondarySpeed: 0.5, // different rate prevents mechanical feel
+	secondarySpeed: Math.PI / 4, // 1 cycle per loop
 	secondaryAmplitude: 0.01,
 
 	// Vertical pulse — displacement is stronger at bottom, travels upward
-	verticalPulseSpeed: 1.2, // upward wave travel speed
+	verticalPulseSpeed: Math.PI / 2, // 2 cycles per loop
 	verticalPulseFreq: 5.0, // wave density along vertical axis
 	verticalPulseDepth: 0.6, // 0 = no pulse, 1 = full bottom-up modulation
 
 	// Hue shift — subtle color drift on its own cycle
 	hueShiftAmount: 0.6, // max hue rotation in radians (~8°)
-	hueShiftSpeed: 0.13, // deliberately slow, avoids all other rates
+	hueShiftSpeed: Math.PI / 4, // 1 cycle per loop
 
 	// Chromatic aberration
 	chromaticAmount: 0.006, // base RGB offset amount
-	chromaticPulseSpeed: 0.4, // independent pulse speed
+	chromaticPulseSpeed: Math.PI / 4, // 1 cycle per loop
 	chromaticPulseDepth: 0.85, // 0 = steady, 1 = pulses to zero
 
-	// Recording
-	recordFrames: 1440, // 30s at 48fps
+	// Loop & recording
+	loopDuration: 8, // seconds — all speeds quantized for seamless loop
+	recordFrames: 384, // 8s at 48fps — one complete loop
 	fps: 48,
 }
 
@@ -131,8 +132,9 @@ const sketch = (p) => {
 	}
 
 	p.draw = () => {
-		// Continuous time in seconds — no looping, organic drift
-		const time = p.frameCount / CONFIG.fps
+		// Looping time in seconds — wraps every 8s for seamless loop
+		const loopFrames = CONFIG.loopDuration * CONFIG.fps
+		const time = (p.frameCount % loopFrames) / CONFIG.fps
 
 		// Hue shift drifts on its own slow cycle
 		const hueShift = Math.sin(time * CONFIG.hueShiftSpeed) * CONFIG.hueShiftAmount
