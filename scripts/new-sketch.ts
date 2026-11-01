@@ -5,8 +5,8 @@ import { resolve, join } from 'path'
 
 const TEMPLATES = ['basic', 'shader', 'image', 'audio-reactive']
 
-function parseArgs(args) {
-	const result = { name: null, template: 'basic' }
+function parseArgs(args: string[]) {
+	const result: { name: string | null; template: string } = { name: null, template: 'basic' }
 	for (let i = 0; i < args.length; i++) {
 		if (args[i] === '--name' && args[i + 1]) {
 			result.name = args[i + 1]
@@ -19,7 +19,7 @@ function parseArgs(args) {
 	return result
 }
 
-function getNextNumber(sketchesDir) {
+function getNextNumber(sketchesDir: string) {
 	if (!existsSync(sketchesDir)) return 1
 	const dirs = readdirSync(sketchesDir, { withFileTypes: true })
 		.filter((d) => d.isDirectory())
@@ -34,7 +34,7 @@ function main() {
 	const args = parseArgs(process.argv.slice(2))
 
 	if (!args.name) {
-		console.error('Usage: node scripts/new-sketch.js --name <sketch-name> [--template <template>]')
+		console.error('Usage: node scripts/new-sketch.ts --name <sketch-name> [--template <template>]')
 		console.error(`Templates: ${TEMPLATES.join(', ')}`)
 		process.exit(1)
 	}
@@ -52,9 +52,9 @@ function main() {
 	mkdirSync(sketchDir, { recursive: true })
 
 	// Copy template
-	const templatePath = resolve('templates', `${args.template}.js`)
+	const templatePath = resolve('templates', `${args.template}.ts`)
 	const templateContent = readFileSync(templatePath, 'utf-8')
-	writeFileSync(join(sketchDir, 'sketch.js'), templateContent)
+	writeFileSync(join(sketchDir, 'sketch.ts'), templateContent)
 
 	// Generate index.html
 	const html = `<!doctype html>
@@ -73,7 +73,7 @@ function main() {
     </style>
   </head>
   <body>
-    <script type="module" src="./sketch.js"></script>
+    <script type="module" src="./sketch.ts"></script>
   </body>
 </html>
 `

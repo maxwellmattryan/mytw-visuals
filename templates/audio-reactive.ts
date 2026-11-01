@@ -1,13 +1,14 @@
 import p5 from 'p5'
 import 'p5/lib/addons/p5.sound'
-import { SIZES, createCanvas, centerCanvas } from '@lib/layout.js'
-import { createCapture } from '@lib/capture.js'
+import { SIZES, createCanvas, centerCanvas } from '@lib/layout'
+import { createCapture } from '@lib/capture'
+import type { SketchCapture } from '@lib/capture'
 
-const sketch = (p) => {
-	let cnv
-	let cap
-	let mic
-	let fft
+const sketch = (p: p5) => {
+	let cnv: p5.Renderer
+	let cap: SketchCapture
+	let mic: p5.AudioIn
+	let fft: p5.FFT
 
 	p.setup = () => {
 		cnv = createCanvas(p, SIZES.SQUARE)

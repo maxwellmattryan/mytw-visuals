@@ -1,10 +1,11 @@
 import p5 from 'p5'
-import { SIZES, createCanvas, centerCanvas } from '@lib/layout.js'
-import { createCapture } from '@lib/capture.js'
+import { SIZES, createCanvas, centerCanvas } from '@lib/layout'
+import { createCapture } from '@lib/capture'
+import type { SketchCapture } from '@lib/capture'
 
-const sketch = (p) => {
-	let cnv
-	let cap
+const sketch = (p: p5) => {
+	let cnv: p5.Renderer
+	let cap: SketchCapture
 
 	p.setup = () => {
 		cnv = createCanvas(p, SIZES.SQUARE)

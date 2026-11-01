@@ -1,9 +1,10 @@
 import p5 from 'p5'
-import { SIZES, createWebGLCanvas, centerCanvas } from '@lib/layout.js'
-import { compileFilterShader } from '@lib/shaders.js'
-import { createCapture } from '@lib/capture.js'
-import { coverImage } from '@lib/image.js'
-import { loopValue } from '@lib/math.js'
+import { SIZES, createWebGLCanvas, centerCanvas } from '@lib/layout'
+import { compileFilterShader } from '@lib/shaders'
+import { createCapture } from '@lib/capture'
+import type { SketchCapture } from '@lib/capture'
+import { coverImage } from '@lib/image'
+import { loopValue } from '@lib/math'
 
 const TAU = Math.PI * 2
 
@@ -128,11 +129,15 @@ const CONFIG = {
 	},
 }
 
+type LayerFraming = typeof CONFIG.base
+type LayerMotion = typeof CONFIG.motion
+type LayerTransform = ReturnType<typeof evalTransform>
+
 // Evaluate a transform at loop phase t in [0,1). The factor scales the motion:
 // +1 for the base; a negative value for the ghost so it moves contrary, and
 // abs(factor) < 1 makes it travel slower (less) than the base.
 // Every *Cycles is an integer, so it returns to its t=0 value at t=1 -> seamless.
-function evalTransform(t, framing, motion, factor) {
+function evalTransform(t: number, framing: LayerFraming, motion: LayerMotion, factor: number) {
 	const a = t * TAU
 	const spin =
 		motion.spin * a + motion.wobbleAmp * Math.sin(motion.wobbleCycles * a + motion.wobblePhase)
@@ -144,7 +149,12 @@ function evalTransform(t, framing, motion, factor) {
 }
 
 // Push one layer's uniforms under a name prefix (e.g. 'uBase', 'uG').
-function setLayerUniforms(shd, prefix, framing, tf) {
+function setLayerUniforms(
+	shd: p5.Shader,
+	prefix: string,
+	framing: LayerFraming,
+	tf: LayerTransform
+) {
 	shd.setUniform(prefix + 'Zoom', framing.zoom)
 	shd.setUniform(prefix + 'Mir', [framing.mirrorX ? -1 : 1, framing.mirrorY ? -1 : 1])
 	shd.setUniform(prefix + 'Angle', tf.angle)
@@ -320,12 +330,12 @@ void main() {
 // ---------------------------------------------------------------------------
 // Sketch
 // ---------------------------------------------------------------------------
-const sketch = (p) => {
-	let cnv
-	let cap
-	let shd
-	let img
-	let gfx
+const sketch = (p: p5) => {
+	let cnv: p5.Renderer
+	let cap: SketchCapture
+	let shd: p5.Shader
+	let img: p5.Image
+	let gfx: p5.Graphics
 	let recordStartFrame = -1
 
 	p.preload = () => {

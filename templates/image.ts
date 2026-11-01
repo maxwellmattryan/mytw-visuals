@@ -1,12 +1,13 @@
 import p5 from 'p5'
-import { SIZES, createCanvas, centerCanvas } from '@lib/layout.js'
-import { fitImage } from '@lib/image.js'
-import { createCapture } from '@lib/capture.js'
+import { SIZES, createCanvas, centerCanvas } from '@lib/layout'
+import { fitImage } from '@lib/image'
+import { createCapture } from '@lib/capture'
+import type { SketchCapture } from '@lib/capture'
 
-const sketch = (p) => {
-	let cnv
-	let cap
-	let img
+const sketch = (p: p5) => {
+	let cnv: p5.Renderer
+	let cap: SketchCapture
+	let img: p5.Image
 
 	p.preload = () => {
 		img = p.loadImage('/images/sample.png')

@@ -1,8 +1,9 @@
 import p5 from 'p5'
-import { SIZES, createWebGLCanvas, centerCanvas } from '@lib/layout.js'
-import { compileFilterShader } from '@lib/shaders.js'
-import { createCapture } from '@lib/capture.js'
-import { coverImage } from '@lib/image.js'
+import { SIZES, createWebGLCanvas, centerCanvas } from '@lib/layout'
+import { compileFilterShader } from '@lib/shaders'
+import { createCapture } from '@lib/capture'
+import type { SketchCapture } from '@lib/capture'
+import { coverImage } from '@lib/image'
 
 // ---------------------------------------------------------------------------
 // CONFIG — tweak these values to adjust the effect
@@ -99,12 +100,12 @@ void main() {
 // ---------------------------------------------------------------------------
 // Sketch
 // ---------------------------------------------------------------------------
-const sketch = (p) => {
-	let cnv
-	let cap
-	let gfx
-	let shd
-	let img
+const sketch = (p: p5) => {
+	let cnv: p5.Renderer
+	let cap: SketchCapture
+	let gfx: p5.Graphics
+	let shd: p5.Shader
+	let img: p5.Image
 	let recordStartFrame = -1
 
 	p.preload = () => {

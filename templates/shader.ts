@@ -1,14 +1,15 @@
 import p5 from 'p5'
-import { SIZES, createWebGLCanvas, centerCanvas } from '@lib/layout.js'
-// eslint-disable-next-line no-unused-vars
-import { VERT_DEFAULT, FRAG_PASSTHROUGH, compileFilterShader } from '@lib/shaders.js'
-import { createCapture } from '@lib/capture.js'
+import { SIZES, createWebGLCanvas, centerCanvas } from '@lib/layout'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { VERT_DEFAULT, FRAG_PASSTHROUGH, compileFilterShader } from '@lib/shaders'
+import { createCapture } from '@lib/capture'
+import type { SketchCapture } from '@lib/capture'
 
-const sketch = (p) => {
-	let cnv
-	let cap
-	let gfx
-	let shd
+const sketch = (p: p5) => {
+	let cnv: p5.Renderer
+	let cap: SketchCapture
+	let gfx: p5.Graphics
+	let shd: p5.Shader
 
 	p.setup = () => {
 		cnv = createWebGLCanvas(p, SIZES.SQUARE)
