@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals'
+import { describe, expect, it, jest } from '@jest/globals'
 
 import {
 	easeInOutQuad,
@@ -15,11 +15,11 @@ import {
 	sinN,
 	cosN,
 	fbm,
-} from '../math.js'
+} from '@lib/math'
 
 // ── Easing helpers ──────────────────────────────────────────────────
 
-const easingFunctions = [
+const easingFunctions: [string, (t: number) => number][] = [
 	['easeInOutQuad', easeInOutQuad],
 	['easeOutCubic', easeOutCubic],
 	['easeInCubic', easeInCubic],
@@ -197,8 +197,8 @@ describe('fbm', () => {
 	})
 
 	it('doubles frequency each octave', () => {
-		const calls = []
-		const mock = jest.fn((x, y) => {
+		const calls: { x: number; y: number }[] = []
+		const mock = jest.fn((x: number, y: number) => {
 			calls.push({ x, y })
 			return 0.5
 		})

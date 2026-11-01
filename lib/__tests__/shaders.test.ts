@@ -1,4 +1,5 @@
-import { jest } from '@jest/globals'
+import { describe, expect, it, jest } from '@jest/globals'
+import type p5 from 'p5'
 
 import {
 	VERT_DEFAULT,
@@ -11,7 +12,8 @@ import {
 	FRAG_VIGNETTE,
 	compileShader,
 	compileFilterShader,
-} from '../shaders.js'
+} from '@lib/shaders'
+import type { UniformName } from '@lib/shaders'
 
 // ── VERT_DEFAULT ────────────────────────────────────────────────────
 
@@ -29,7 +31,12 @@ describe('VERT_DEFAULT', () => {
 
 // ── Fragment shader generators ──────────────────────────────────────
 
-const fragGenerators = [
+const fragGenerators: [
+	string,
+	(...names: UniformName[]) => string,
+	UniformName[],
+	UniformName[],
+][] = [
 	['FRAG_PASSTHROUGH', FRAG_PASSTHROUGH, [], []],
 	['FRAG_CHROMATIC_ABERRATION', FRAG_CHROMATIC_ABERRATION, ['uAmount'], ['myAmt']],
 	[
@@ -80,7 +87,7 @@ describe('compileShader', () => {
 	it('calls p.createShader with vert and frag and returns result', () => {
 		const mockShader = { id: 'shader' }
 		const p = { createShader: jest.fn(() => mockShader) }
-		const result = compileShader(p, 'vertSrc', 'fragSrc')
+		const result = compileShader(p as unknown as p5, 'vertSrc', 'fragSrc')
 		expect(p.createShader).toHaveBeenCalledWith('vertSrc', 'fragSrc')
 		expect(result).toBe(mockShader)
 	})
@@ -92,7 +99,7 @@ describe('compileFilterShader', () => {
 	it('calls p.createShader with VERT_DEFAULT and frag', () => {
 		const mockShader = { id: 'filter' }
 		const p = { createShader: jest.fn(() => mockShader) }
-		const result = compileFilterShader(p, 'fragSrc')
+		const result = compileFilterShader(p as unknown as p5, 'fragSrc')
 		expect(p.createShader).toHaveBeenCalledWith(VERT_DEFAULT, 'fragSrc')
 		expect(result).toBe(mockShader)
 	})

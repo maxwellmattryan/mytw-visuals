@@ -1,19 +1,20 @@
 /**
- * Canvas sizing presets and layout helpers.
+ * Canvas creation and layout helpers.
  */
 
-export const SIZES = {
-	SQUARE: { width: 1080, height: 1080 },
-	STORY: { width: 1080, height: 1920 },
-	LANDSCAPE: { width: 1920, height: 1080 },
-	TWITTER: { width: 1200, height: 675 },
-}
+import type p5 from 'p5'
+import { SIZES } from './sizes'
+import type { CanvasSize } from './sizes'
 
 /**
  * Create a p5 canvas from a preset size object.
  * Returns the canvas element for further manipulation.
  */
-export function createCanvas(p, preset = SIZES.SQUARE, pixelDensity = 1) {
+export function createCanvas(
+	p: p5,
+	preset: CanvasSize = SIZES.SQUARE,
+	pixelDensity = 1
+): p5.Renderer {
 	p.pixelDensity(pixelDensity)
 	const cnv = p.createCanvas(preset.width, preset.height)
 	centerCanvas(p, cnv)
@@ -23,7 +24,11 @@ export function createCanvas(p, preset = SIZES.SQUARE, pixelDensity = 1) {
 /**
  * Create a WebGL canvas from a preset size object.
  */
-export function createWebGLCanvas(p, preset = SIZES.SQUARE, pixelDensity = 1) {
+export function createWebGLCanvas(
+	p: p5,
+	preset: CanvasSize = SIZES.SQUARE,
+	pixelDensity = 1
+): p5.Renderer {
 	p.pixelDensity(pixelDensity)
 	const cnv = p.createCanvas(preset.width, preset.height, p.WEBGL)
 	centerCanvas(p, cnv)
@@ -31,7 +36,7 @@ export function createWebGLCanvas(p, preset = SIZES.SQUARE, pixelDensity = 1) {
 }
 
 /** Center the canvas element in the window. */
-export function centerCanvas(p, cnv) {
+export function centerCanvas(p: p5, cnv: p5.Renderer): void {
 	const x = (p.windowWidth - p.width) / 2
 	const y = (p.windowHeight - p.height) / 2
 	cnv.position(x, y)
@@ -41,7 +46,7 @@ export function centerCanvas(p, cnv) {
  * Scale canvas to fit within the browser window while preserving aspect ratio.
  * Returns the scale factor applied.
  */
-export function fitToWindow(p, cnv, padding = 40) {
+export function fitToWindow(p: p5, cnv: p5.Renderer, padding = 40): number {
 	const scaleX = (p.windowWidth - padding) / p.width
 	const scaleY = (p.windowHeight - padding) / p.height
 	const scale = Math.min(scaleX, scaleY, 1)

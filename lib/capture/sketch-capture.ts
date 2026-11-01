@@ -7,8 +7,24 @@
  * regardless of recording length.
  */
 
+import type p5 from 'p5'
+
+export interface CaptureOptions {
+	framerate?: number
+}
+
 export class SketchCapture {
-	constructor(canvas, options = {}) {
+	canvas: HTMLCanvasElement
+	framerate: number
+	recording: boolean
+	private _session: string | null
+	private _pending: number
+	private _total: number
+	private _buffer: HTMLCanvasElement | null
+	private _bufferCtx: CanvasRenderingContext2D | null
+	private _indicator: HTMLDivElement | null
+
+	constructor(canvas: HTMLCanvasElement, options: CaptureOptions = {}) {
 		this.canvas = canvas
 		this.framerate = options.framerate || 60
 		this.recording = false
@@ -50,10 +66,11 @@ export class SketchCapture {
 
 	capture() {
 		if (!this.recording) return
-		this._bufferCtx.drawImage(this.canvas, 0, 0)
+		// Both are set whenever recording is true.
+		this._bufferCtx!.drawImage(this.canvas, 0, 0)
 		const frame = this._total++
 		this._pending++
-		this._buffer.toBlob((blob) => {
+		this._buffer!.toBlob((blob) => {
 			const url = `/api/capture/frame?session=${this._session}&frame=${frame}`
 			fetch(url, {
 				method: 'POST',
@@ -105,7 +122,7 @@ export class SketchCapture {
 		this._bufferCtx = null
 	}
 
-	screenshot(p) {
+	screenshot(p: p5) {
 		p.saveCanvas('screenshot', 'png')
 		console.log('[capture] Screenshot saved')
 	}
@@ -142,7 +159,7 @@ export class SketchCapture {
 	 * Bind keyboard shortcuts: hold R = record, S = screenshot.
 	 * Wraps existing p.keyPressed/p.keyReleased rather than replacing them.
 	 */
-	bindKeys(p) {
+	bindKeys(p: p5) {
 		const existingPressed = p.keyPressed ? p.keyPressed.bind(p) : null
 		p.keyPressed = () => {
 			if (p.key === 'r' || p.key === 'R') this.start()
@@ -159,7 +176,10 @@ export class SketchCapture {
 }
 
 /** Factory function for creating a capture instance. */
-export function createCapture(canvas, options = {}) {
+export function createCapture(
+	canvas: HTMLCanvasElement,
+	options: CaptureOptions = {}
+): SketchCapture {
 	return new SketchCapture(canvas, options)
 }
 
@@ -169,6 +189,6 @@ export function createCapture(canvas, options = {}) {
 
 function localTimestamp() {
 	const d = new Date()
-	const pad = (n) => String(n).padStart(2, '0')
+	const pad = (n: number) => String(n).padStart(2, '0')
 	return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}`
 }

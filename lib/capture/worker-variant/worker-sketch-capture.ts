@@ -1,4 +1,8 @@
 /**
+ * UNWIRED: no sketch or template uses this variant, and neither lib/capture/index.ts
+ * nor lib/index.ts re-exports it. The dev server ignores its `format` param and
+ * saves every frame as .png, whatever the encoding.
+ *
  * Recording & screenshot helpers using streamed frame capture.
  *
  * Each frame is snapshotted via createImageBitmap (fast, immutable) then
@@ -7,8 +11,28 @@
  * canvas size or recording framerate.
  */
 
-export class SketchCapture {
-	constructor(canvas, options = {}) {
+import type p5 from 'p5'
+import type { CaptureOptions } from '../sketch-capture'
+
+export interface WorkerCaptureOptions extends CaptureOptions {
+	format?: string
+	quality?: number
+}
+
+export class WorkerSketchCapture {
+	canvas: HTMLCanvasElement
+	framerate: number
+	recording: boolean
+	private _session: string | null
+	private _pending: number
+	private _total: number
+	private _format: string
+	private _quality: number
+	private _worker: Worker | null
+	private _idleResolve: ((value?: unknown) => void) | null
+	private _indicator: HTMLDivElement | null
+
+	constructor(canvas: HTMLCanvasElement, options: WorkerCaptureOptions = {}) {
 		this.canvas = canvas
 		this.framerate = options.framerate || 60
 		this.recording = false
@@ -28,7 +52,7 @@ export class SketchCapture {
 		this._pending = 0
 		this._total = 0
 
-		this._worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' })
+		this._worker = new Worker(new URL('./encoder.worker.ts', import.meta.url), { type: 'module' })
 		this._worker.onmessage = (e) => {
 			if (e.data.type === 'done' || e.data.type === 'error') {
 				this._pending--
@@ -65,7 +89,7 @@ export class SketchCapture {
 		const frame = this._total++
 		this._pending++
 		createImageBitmap(this.canvas).then((bitmap) => {
-			this._worker.postMessage(
+			this._worker!.postMessage(
 				{
 					type: 'frame',
 					bitmap,
@@ -89,13 +113,13 @@ export class SketchCapture {
 
 	async _finish() {
 		if (this._pending > 0) {
-			this._worker.postMessage({ type: 'stop' })
+			this._worker!.postMessage({ type: 'stop' })
 			await new Promise((resolve) => {
 				this._idleResolve = resolve
 			})
 		}
 
-		this._worker.terminate()
+		this._worker!.terminate()
 		this._worker = null
 
 		try {
@@ -116,7 +140,7 @@ export class SketchCapture {
 		this._total = 0
 	}
 
-	screenshot(p) {
+	screenshot(p: p5) {
 		p.saveCanvas('screenshot', 'png')
 		console.log('[capture] Screenshot saved')
 	}
@@ -153,7 +177,7 @@ export class SketchCapture {
 	 * Bind keyboard shortcuts: hold R = record, S = screenshot.
 	 * Wraps existing p.keyPressed/p.keyReleased rather than replacing them.
 	 */
-	bindKeys(p) {
+	bindKeys(p: p5) {
 		const existingPressed = p.keyPressed ? p.keyPressed.bind(p) : null
 		p.keyPressed = () => {
 			if (p.key === 'r' || p.key === 'R') this.start()
@@ -170,8 +194,11 @@ export class SketchCapture {
 }
 
 /** Factory function for creating a capture instance. */
-export function createCapture(canvas, options = {}) {
-	return new SketchCapture(canvas, options)
+export function createWorkerCapture(
+	canvas: HTMLCanvasElement,
+	options: WorkerCaptureOptions = {}
+): WorkerSketchCapture {
+	return new WorkerSketchCapture(canvas, options)
 }
 
 // ---------------------------------------------------------------------------
@@ -180,6 +207,6 @@ export function createCapture(canvas, options = {}) {
 
 function localTimestamp() {
 	const d = new Date()
-	const pad = (n) => String(n).padStart(2, '0')
+	const pad = (n: number) => String(n).padStart(2, '0')
 	return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}`
 }

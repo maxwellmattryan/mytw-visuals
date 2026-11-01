@@ -1,22 +1,10 @@
 /**
- * GLSL shaders and compilation helpers for p5 WebGL sketches.
+ * GLSL fragment shaders for p5 WebGL sketches.
  */
 
-/** Default passthrough vertex shader for p5 WebGL. */
-export const VERT_DEFAULT = `
-attribute vec3 aPosition;
-attribute vec2 aTexCoord;
-varying vec2 vTexCoord;
+export type UniformName = string
 
-void main() {
-  vTexCoord = aTexCoord;
-  vec4 positionVec4 = vec4(aPosition, 1.0);
-  positionVec4.xy = positionVec4.xy * 2.0 - 1.0;
-  gl_Position = positionVec4;
-}
-`
-
-export function FRAG_PASSTHROUGH() {
+export function FRAG_PASSTHROUGH(): string {
 	return `
 precision mediump float;
 varying vec2 vTexCoord;
@@ -28,7 +16,7 @@ void main() {
 `
 }
 
-export function FRAG_CHROMATIC_ABERRATION(amount = 'uAmount') {
+export function FRAG_CHROMATIC_ABERRATION(amount: UniformName = 'uAmount'): string {
 	return `
 precision mediump float;
 varying vec2 vTexCoord;
@@ -46,10 +34,10 @@ void main() {
 }
 
 export function FRAG_SINE_DISPLACEMENT(
-	amplitude = 'uAmplitude',
-	frequency = 'uFrequency',
-	time = 'uTime'
-) {
+	amplitude: UniformName = 'uAmplitude',
+	frequency: UniformName = 'uFrequency',
+	time: UniformName = 'uTime'
+): string {
 	return `
 precision mediump float;
 varying vec2 vTexCoord;
@@ -67,7 +55,7 @@ void main() {
 `
 }
 
-export function FRAG_FEEDBACK(decay = 'uDecay') {
+export function FRAG_FEEDBACK(decay: UniformName = 'uDecay'): string {
 	return `
 precision mediump float;
 varying vec2 vTexCoord;
@@ -83,7 +71,7 @@ void main() {
 `
 }
 
-export function FRAG_HUE_SHIFT(shift = 'uShift') {
+export function FRAG_HUE_SHIFT(shift: UniformName = 'uShift'): string {
 	return `
 precision mediump float;
 varying vec2 vTexCoord;
@@ -114,7 +102,10 @@ void main() {
 `
 }
 
-export function FRAG_SCANLINES(intensity = 'uIntensity', count = 'uCount') {
+export function FRAG_SCANLINES(
+	intensity: UniformName = 'uIntensity',
+	count: UniformName = 'uCount'
+): string {
 	return `
 precision mediump float;
 varying vec2 vTexCoord;
@@ -130,7 +121,10 @@ void main() {
 `
 }
 
-export function FRAG_VIGNETTE(intensity = 'uIntensity', smoothness = 'uSmoothness') {
+export function FRAG_VIGNETTE(
+	intensity: UniformName = 'uIntensity',
+	smoothness: UniformName = 'uSmoothness'
+): string {
 	return `
 precision mediump float;
 varying vec2 vTexCoord;
@@ -146,14 +140,4 @@ void main() {
   gl_FragColor = vec4(color.rgb * vignette, color.a);
 }
 `
-}
-
-/** Compile a shader from vertex + fragment GLSL strings. */
-export function compileShader(p, vert, frag) {
-	return p.createShader(vert, frag)
-}
-
-/** Compile a filter shader (uses VERT_DEFAULT). */
-export function compileFilterShader(p, frag) {
-	return p.createShader(VERT_DEFAULT, frag)
 }
