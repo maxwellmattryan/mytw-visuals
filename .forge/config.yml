@@ -1,0 +1,111 @@
+# Forge configuration. Every key is documented in docs/CONFIG.md of the Forge plugin.
+# Re-run `/forge init` to change answers interactively, or edit this file directly.
+schemaVersion: 52
+git:
+  base: develop
+worktrees:
+  copy:
+    - CLAUDE.md
+  setup:
+    - yarn install --frozen-lockfile
+commands:
+  setup: yarn install --frozen-lockfile
+  build: yarn build
+  test: yarn test {args}
+  lint: yarn lint
+  format: yarn format
+  dev: yarn dev --port {port}
+  format-check: npx prettier --check .
+verify:
+  - build
+  -
+    - lint
+    - format-check
+    - test
+runtime:
+  models:
+    approver: sonnet
+tracker:
+  kind: github
+  github:
+    repo: maxwellmattryan/mytw-visuals
+review:
+  panel:
+    - name: code
+      always: true
+    - name: tests
+      always: true
+    - name: security
+      model: opus
+      when: input handling, secrets, network, dependencies, file or process access (dev-server capture endpoint, convert script)
+      paths:
+        - package.json
+        - yarn.lock
+    - name: docs
+      when: documentation changes
+      paths:
+        - "*.md"
+        - docs/**
+    - name: performance
+      when: render loops, shaders, image processing, the capture pipeline, or shared lib/ code that runs per frame
+    - name: design
+      when: changes to what a sketch or the sketch picker renders
+merge:
+  auto: true
+  requiredChecks:
+    - name: Vite Build
+      workflow: .github/workflows/ci.build.yml
+    - name: Prettier
+      workflow: .github/workflows/ci.lint.yml
+    - name: ESLint
+      workflow: .github/workflows/ci.lint.yml
+    - name: Jest
+      workflow: .github/workflows/ci.test.yml
+policy:
+  protectedPaths:
+    - paths:
+        - .github/workflows/**
+        - .gitlab-ci.yml
+        - Jenkinsfile
+        - .circleci/**
+      action: escalate
+      reason: CI/CD configuration
+    - paths:
+        - Dockerfile*
+        - "**/*.tf"
+      action: escalate
+      reason: infrastructure
+    - paths:
+        - "**/migrations/**"
+      action: escalate
+      reason: database migrations
+    - paths:
+        - package-lock.json
+        - yarn.lock
+        - pnpm-lock.yaml
+      action: escalate
+      reason: dependency lockfile
+    - paths:
+        - "**/.env*"
+      action: escalate
+      reason: environment files can hold credentials
+    - paths:
+        - "**/*.pem"
+      action: refuse
+      reason: private keys and certificates are never committed by Forge
+    - paths:
+        - .forge/config.yml
+        - .forge/secrets-allow.txt
+        - .forge/trackers/**
+        - .forge/ci/**
+      action: refuse
+      reason: Forge's own policy changes only by a human on the base branch
+    - paths:
+        - "**/AGENTS.md"
+        - "**/CLAUDE.md"
+        - "**/CLAUDE.local.md"
+        - .claude
+        - "**/.claude/**"
+        - .mcp.json
+      action: escalate
+      reason: "agent instructions and Claude Code settings: every session reads them"

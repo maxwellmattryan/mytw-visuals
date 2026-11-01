@@ -1,2 +1,4 @@
+.forge
 dist
 node_modules
+output
