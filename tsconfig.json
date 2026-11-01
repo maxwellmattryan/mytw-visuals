@@ -1,0 +1,25 @@
+{
+	"compilerOptions": {
+		"strict": true,
+		"noEmit": true,
+		"isolatedModules": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"target": "ESNext",
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"lib": ["ES2023", "DOM", "DOM.Iterable"],
+		"types": ["node"],
+		"paths": {
+			"@lib": ["./lib/index.ts"],
+			"@lib/*": ["./lib/*"]
+		}
+	},
+	"ts-node": {
+		"compilerOptions": {
+			"moduleResolution": "node10"
+		}
+	},
+	"include": ["lib", "picker", "vite-plugins", "scripts", "templates", "sketches", "*.ts"]
+}
