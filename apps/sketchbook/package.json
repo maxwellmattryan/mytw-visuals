@@ -10,7 +10,7 @@
 		"new": "node scripts/new-sketch.ts"
 	},
 	"dependencies": {
-		"@mytw/lib": "0.1.0",
+		"@mytw/lib": "*",
 		"ccapture.js-npmfixed": "1.1.0",
 		"p5": "1.11.3"
 	},
