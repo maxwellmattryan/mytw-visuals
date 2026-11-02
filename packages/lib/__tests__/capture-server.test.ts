@@ -15,7 +15,7 @@ import { tmpdir } from 'os'
 import { join, resolve } from 'path'
 
 import { localTimestamp } from '@lib/capture/sketch-capture'
-import { createCaptureMiddleware, resolveSessionDir } from '../../vite-plugins/capture-server'
+import { createCaptureMiddleware, resolveSessionDir } from '../../../apps/sketchbook/vite-plugins/capture-server'
 
 const SESSION = '2026-01-01T00-00-00'
 const NEXT_STATUS = 418

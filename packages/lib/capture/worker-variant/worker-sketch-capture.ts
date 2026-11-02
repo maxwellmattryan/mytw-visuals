@@ -1,38 +1,48 @@
 /**
- * Recording & screenshot helpers using streamed PNG frame capture.
+ * UNWIRED: no sketch or template uses this variant, and neither lib/capture/index.ts
+ * nor lib/index.ts re-exports it. The dev server ignores its `format` param and
+ * saves every frame as .png, whatever the encoding.
  *
- * Each frame is copied to an offscreen 2D canvas (sync, fast) then encoded
- * as PNG via toBlob (async, non-blocking). The blob is immediately POSTed
- * to the Vite dev server and discarded — browser memory stays constant
- * regardless of recording length.
+ * Recording & screenshot helpers using streamed frame capture.
+ *
+ * Each frame is snapshotted via createImageBitmap (fast, immutable) then
+ * transferred to a Web Worker for encoding (OffscreenCanvas.convertToBlob)
+ * and upload. The main thread stays free for rendering regardless of
+ * canvas size or recording framerate.
  */
 
 import type p5 from 'p5'
+import type { CaptureOptions } from '../sketch-capture'
 
-export interface CaptureOptions {
-	framerate?: number
+export interface WorkerCaptureOptions extends CaptureOptions {
+	format?: string
+	quality?: number
 }
 
-export class SketchCapture {
+export class WorkerSketchCapture {
 	canvas: HTMLCanvasElement
 	framerate: number
 	recording: boolean
 	private _session: string | null
 	private _pending: number
 	private _total: number
-	private _buffer: HTMLCanvasElement | null
-	private _bufferCtx: CanvasRenderingContext2D | null
+	private _format: string
+	private _quality: number
+	private _worker: Worker | null
+	private _idleResolve: ((value?: unknown) => void) | null
 	private _indicator: HTMLDivElement | null
 
-	constructor(canvas: HTMLCanvasElement, options: CaptureOptions = {}) {
+	constructor(canvas: HTMLCanvasElement, options: WorkerCaptureOptions = {}) {
 		this.canvas = canvas
 		this.framerate = options.framerate || 60
 		this.recording = false
 		this._session = null
 		this._pending = 0
 		this._total = 0
-		this._buffer = null
-		this._bufferCtx = null
+		this._format = options.format || 'jpeg'
+		this._quality = options.quality || 0.95
+		this._worker = null
+		this._idleResolve = null
 		this._indicator = null
 	}
 
@@ -41,21 +51,31 @@ export class SketchCapture {
 		this._session = localTimestamp()
 		this._pending = 0
 		this._total = 0
-		this._buffer = document.createElement('canvas')
-		this._buffer.width = this.canvas.width
-		this._buffer.height = this.canvas.height
-		this._bufferCtx = this._buffer.getContext('2d')
+
+		this._worker = new Worker(new URL('./encoder.worker.ts', import.meta.url), { type: 'module' })
+		this._worker.onmessage = (e) => {
+			if (e.data.type === 'done' || e.data.type === 'error') {
+				this._pending--
+				if (e.data.type === 'error') {
+					console.warn(`[capture] Frame ${e.data.frame} failed: ${e.data.error}`)
+				}
+			}
+			if (e.data.type === 'idle' && this._idleResolve) {
+				this._idleResolve()
+				this._idleResolve = null
+			}
+		}
 
 		try {
-			const url = `/api/capture/start?session=${this._session}&fps=${this.framerate}`
+			const url = `/api/capture/start?session=${this._session}&fps=${this.framerate}&format=${this._format}`
 			const res = await fetch(url, { method: 'POST' })
 			const result = await res.json()
 			if (!result.ok) throw new Error(result.error)
 		} catch (err) {
 			console.error('[capture] Failed to start session — is the dev server running?', err)
+			this._worker.terminate()
+			this._worker = null
 			this._session = null
-			this._buffer = null
-			this._bufferCtx = null
 			return
 		}
 
@@ -66,27 +86,21 @@ export class SketchCapture {
 
 	capture() {
 		if (!this.recording) return
-		// Both are set whenever recording is true.
-		this._bufferCtx!.drawImage(this.canvas, 0, 0)
 		const frame = this._total++
 		this._pending++
-		this._buffer!.toBlob((blob) => {
-			const url = `/api/capture/frame?session=${this._session}&frame=${frame}`
-			fetch(url, {
-				method: 'POST',
-				headers: { 'Content-Type': 'image/png' },
-				body: blob,
-			})
-				.then((res) => {
-					if (!res.ok) console.warn(`[capture] Frame ${frame} upload failed`)
-				})
-				.catch((err) => {
-					console.warn(`[capture] Frame ${frame} upload error`, err)
-				})
-				.finally(() => {
-					this._pending--
-				})
-		}, 'image/png')
+		createImageBitmap(this.canvas).then((bitmap) => {
+			this._worker!.postMessage(
+				{
+					type: 'frame',
+					bitmap,
+					session: this._session,
+					frame,
+					format: this._format,
+					quality: this._quality,
+				},
+				[bitmap]
+			)
+		})
 	}
 
 	stop() {
@@ -98,9 +112,15 @@ export class SketchCapture {
 	}
 
 	async _finish() {
-		while (this._pending > 0) {
-			await new Promise((r) => setTimeout(r, 100))
+		if (this._pending > 0) {
+			this._worker!.postMessage({ type: 'stop' })
+			await new Promise((resolve) => {
+				this._idleResolve = resolve
+			})
 		}
+
+		this._worker!.terminate()
+		this._worker = null
 
 		try {
 			const url = `/api/capture/stop?session=${this._session}`
@@ -108,7 +128,7 @@ export class SketchCapture {
 			const result = await res.json()
 			if (result.ok) {
 				console.log(`[capture] ${this._total} frames saved to ${result.dir}`)
-				console.log(`[capture] Convert with: ./scripts/convert.sh "${result.dir}"`)
+				console.log(`[capture] Convert with: yarn convert "${result.dir}"`)
 			} else {
 				console.error('[capture] Stop failed:', result.error)
 			}
@@ -118,8 +138,6 @@ export class SketchCapture {
 
 		this._session = null
 		this._total = 0
-		this._buffer = null
-		this._bufferCtx = null
 	}
 
 	screenshot(p: p5) {
@@ -176,18 +194,18 @@ export class SketchCapture {
 }
 
 /** Factory function for creating a capture instance. */
-export function createCapture(
+export function createWorkerCapture(
 	canvas: HTMLCanvasElement,
-	options: CaptureOptions = {}
-): SketchCapture {
-	return new SketchCapture(canvas, options)
+	options: WorkerCaptureOptions = {}
+): WorkerSketchCapture {
+	return new WorkerSketchCapture(canvas, options)
 }
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-export function localTimestamp() {
+function localTimestamp() {
 	const d = new Date()
 	const pad = (n: number) => String(n).padStart(2, '0')
 	return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}`

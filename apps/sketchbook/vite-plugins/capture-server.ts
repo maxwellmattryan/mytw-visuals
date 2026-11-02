@@ -110,7 +110,7 @@ function writeFrame(req: IncomingMessage, res: ServerResponse, dir: string, fram
 function stopSession(res: ServerResponse, dir: string): void {
 	if (!existsSync(dir)) return reject(res, 404, 'Capture session was not started')
 	console.log(`[capture] Session complete: ${dir}`)
-	console.log(`[capture] Convert with: ./scripts/convert.sh ${dir}`)
+	console.log(`[capture] Convert with: yarn convert "${dir}"`)
 	respond(res, { ok: true, dir })
 }
 

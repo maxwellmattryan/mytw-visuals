@@ -12,8 +12,8 @@
 		"lib": ["ES2023", "DOM", "DOM.Iterable"],
 		"types": ["node"],
 		"paths": {
-			"@lib": ["./lib/index.ts"],
-			"@lib/*": ["./lib/*"]
+			"@lib": ["./packages/lib/index.ts"],
+			"@lib/*": ["./packages/lib/*"]
 		}
 	},
 	"ts-node": {
@@ -21,5 +21,5 @@
 			"moduleResolution": "node10"
 		}
 	},
-	"include": ["lib", "picker", "vite-plugins", "scripts", "templates", "sketches", "*.ts"]
+	"include": ["packages", "apps", "*.ts"]
 }
