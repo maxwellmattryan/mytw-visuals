@@ -7,9 +7,9 @@
 
 - **p5.js** in instance mode (`new p5((p) => { ... })`)
 - **Vite** for dev server and builds — sketches are auto-discovered as independent entry points
-- **Custom capture pipeline** — PNG frames POSTed one by one to the dev server → session directory under `~/Downloads/mytw-captures/` → manual ffmpeg conversion to MP4 with `./scripts/convert.sh`
+- **Custom capture pipeline** — PNG frames POSTed one by one to the dev server → session directory under `~/Downloads/mytw-captures/` → manual ffmpeg conversion to MP4 with `yarn convert`
 - **GLSL fragment shaders** for real-time image processing (displacement, chromatic aberration, hue shift, etc.)
-- **Shared utility library** (`lib/`) — math/easing, color palettes, shader helpers, layout presets, image processing
+- **Shared utility library** (`packages/lib/`) — math/easing, color palettes, shader helpers, layout presets, image processing
 - **Sketch templates** for scaffolding new sketches (basic, shader, image, audio-reactive)
 - Strict TypeScript, ES modules (`tsc --noEmit` runs in `yarn build`)
 - ESLint + Prettier + lint-staged pre-commit hook
@@ -26,4 +26,4 @@
 
 - Hold `R` — record, release to stop (red dot indicator when active)
 - `S` — save a single frame as PNG
-- Frames are saved to `~/Downloads/mytw-captures/<session>/` via the dev server; run `./scripts/convert.sh <dir>` to produce an MP4
+- Frames are saved to `~/Downloads/mytw-captures/<session>/` via the dev server; run `yarn convert <dir>` to produce an MP4
