@@ -44,7 +44,7 @@ export function captureServerPlugin(): Plugin {
 				if (route === '/api/capture/stop') {
 					const dir = resolve(homedir(), 'Downloads', 'mytw-captures', session as string)
 					console.log(`[capture] Session complete: ${dir}`)
-					console.log(`[capture] Convert with: ./scripts/convert.sh ${dir}`)
+					console.log(`[capture] Convert with: yarn convert "${dir}"`)
 					res.setHeader('Content-Type', 'application/json')
 					res.end(JSON.stringify({ ok: true, dir }))
 					return
