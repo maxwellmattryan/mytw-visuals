@@ -39,7 +39,7 @@ Sketches are created in `sketches/NNN-name/` with auto-incrementing numbers, eac
 
 ## Export
 
-- **Video**: Hold `R` to record, release to stop. A red dot shows while recording. Each frame is POSTed as a PNG to the dev server, which writes it to `~/Downloads/mytw-captures/<session>/`. Convert a session to MP4 by hand with `./scripts/convert.sh <dir>`; the console prints the exact command. Recording needs `yarn dev`, and there is no fallback download.
+- **Video**: Hold `R` to record, release to stop. A red dot shows while recording. Each frame is POSTed as a PNG to the dev server, which writes it to `~/Downloads/mytw-captures/<session>/`. Convert a session to MP4 by hand with `./scripts/convert.sh <dir>`; the console prints the exact command. Recording needs `yarn dev`, and there is no fallback download. The capture endpoints only accept same-origin requests with a timestamp session name.
 - **Screenshot**: Press `S` to save a PNG of the current frame.
 
 ## TypeScript
