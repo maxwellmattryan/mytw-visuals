@@ -114,3 +114,4 @@ daemon:
   maxConcurrent: 2
 foreman:
   enabled: true
+  ship: merge
