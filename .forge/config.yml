@@ -112,3 +112,5 @@ policy:
 daemon:
   enabled: true
   maxConcurrent: 2
+foreman:
+  enabled: true
