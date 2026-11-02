@@ -108,7 +108,7 @@ export class SketchCapture {
 			const result = await res.json()
 			if (result.ok) {
 				console.log(`[capture] ${this._total} frames saved to ${result.dir}`)
-				console.log(`[capture] Convert with: ./scripts/convert.sh "${result.dir}"`)
+				console.log(`[capture] Convert with: yarn convert "${result.dir}"`)
 			} else {
 				console.error('[capture] Stop failed:', result.error)
 			}
