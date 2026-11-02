@@ -6,8 +6,8 @@ const config: Config = {
 		'^.+\\.ts$': ['ts-jest', { useESM: true }],
 	},
 	moduleNameMapper: {
-		'^@lib$': '<rootDir>/lib/index.ts',
-		'^@lib/(.*)$': '<rootDir>/lib/$1',
+		'^@lib$': '<rootDir>/packages/lib/index.ts',
+		'^@lib/(.*)$': '<rootDir>/packages/lib/$1',
 	},
 }
 

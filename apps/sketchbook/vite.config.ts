@@ -15,7 +15,7 @@ export default defineConfig({
 
 	resolve: {
 		alias: {
-			'@lib': resolve('lib'),
+			'@lib': resolve('../../packages/lib'),
 		},
 	},
 

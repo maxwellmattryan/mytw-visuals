@@ -28,7 +28,7 @@ export default [
 		},
 	},
 	{
-		files: ['scripts/**/*.ts', 'vite-plugins/**/*.ts', '*.config.ts'],
+		files: ['**/scripts/**/*.ts', '**/vite-plugins/**/*.ts', '**/*.config.ts'],
 		languageOptions: {
 			globals: {
 				...globals.node,
@@ -36,7 +36,7 @@ export default [
 		},
 	},
 	{
-		files: ['lib/__tests__/**/*.ts'],
+		files: ['**/__tests__/**/*.ts'],
 		languageOptions: {
 			globals: {
 				...globals.jest,
@@ -45,6 +45,6 @@ export default [
 		},
 	},
 	{
-		ignores: ['dist/', 'node_modules/'],
+		ignores: ['**/dist/', '**/node_modules/'],
 	},
 ]

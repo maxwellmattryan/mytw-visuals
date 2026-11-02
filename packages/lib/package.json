@@ -1,0 +1,16 @@
+{
+	"name": "@mytw/lib",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./index.ts",
+		"./*": "./*/index.ts"
+	},
+	"peerDependencies": {
+		"p5": "1.11.3"
+	},
+	"devDependencies": {
+		"@types/p5": "1.7.7"
+	}
+}
