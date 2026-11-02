@@ -53,33 +53,6 @@
 		<div class="sketches" id="sketches">
 			<span class="empty">loading...</span>
 		</div>
-		<script type="module">
-			const container = document.getElementById('sketches')
-
-			// In dev, fetch from Vite plugin; in production, use inlined list.
-			const inlined = '__SKETCH_LIST__'
-			const sketches =
-				typeof inlined === 'string'
-					? await fetch('/__sketches.json')
-							.then((r) => r.json())
-							.catch(() => [])
-					: inlined
-
-			container.textContent = ''
-
-			if (sketches.length === 0) {
-				const span = document.createElement('span')
-				span.className = 'empty'
-				span.textContent = 'No sketches yet. Run: yarn new --name my-sketch'
-				container.appendChild(span)
-			} else {
-				sketches.forEach((s) => {
-					const a = document.createElement('a')
-					a.href = s.path
-					a.textContent = s.name
-					container.appendChild(a)
-				})
-			}
-		</script>
+		<script type="module" src="/picker/main.ts"></script>
 	</body>
 </html>

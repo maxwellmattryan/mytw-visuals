@@ -1,0 +1,7 @@
+/** eslint-config-prettier 10.0 ships no type declarations. */
+declare module 'eslint-config-prettier' {
+	import type { Linter } from 'eslint'
+
+	const config: Linter.Config
+	export default config
+}
