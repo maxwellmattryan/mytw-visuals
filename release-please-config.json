@@ -1,0 +1,16 @@
+{
+	"$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+	"release-type": "node",
+	"include-component-in-tag": false,
+	"bump-minor-pre-major": true,
+	"bump-patch-for-minor-pre-major": false,
+	"packages": {
+		".": {
+			"package-name": "mytw-visuals",
+			"extra-files": [
+				{ "type": "json", "path": "apps/sketchbook/package.json", "jsonpath": "$.version" },
+				{ "type": "json", "path": "packages/lib/package.json", "jsonpath": "$.version" }
+			]
+		}
+	}
+}
