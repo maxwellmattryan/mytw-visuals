@@ -1,5 +1,7 @@
 ## Summary
 
+The PR title must be a Conventional Commit, because it becomes the squash commit and drives the changelog.
+
 > Please summarize your changes, describing _what_ they are and _why_ they were made.
 
 ...

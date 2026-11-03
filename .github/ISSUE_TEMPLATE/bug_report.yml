@@ -1,6 +1,6 @@
 name: 🐞 Bug Report
 description: File a bug report to help improve the software
-title: '🐞 - '
+title: 'fix: '
 labels: 'bug-report'
 
 body:
