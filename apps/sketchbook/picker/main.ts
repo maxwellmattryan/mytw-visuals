@@ -1,6 +1,9 @@
 import type { SketchEntry } from '../vite-plugins/sketch-list'
 
 const container = document.getElementById('sketches') as HTMLElement
+const version = document.getElementById('version') as HTMLElement
+
+version.textContent = `v${__APP_VERSION__}`
 
 // /__sketches.json only exists on the dev server, so a production build shows the empty message.
 const sketches: SketchEntry[] = await fetch('/__sketches.json')
