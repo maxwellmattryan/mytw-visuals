@@ -111,7 +111,7 @@ policy:
       reason: "agent instructions and Claude Code settings: every session reads them"
 daemon:
   enabled: true
-  maxConcurrent: 2
+  maxConcurrent: 6
 foreman:
   enabled: true
   ship: merge
