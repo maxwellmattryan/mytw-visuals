@@ -1,0 +1,22 @@
+name: PR Title
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  conventional-commit:
+    name: Conventional Commit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # A PR title is attacker-controlled: pass it through env, never interpolate it into run.
+      - run: node scripts/check-pr-title.ts
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}

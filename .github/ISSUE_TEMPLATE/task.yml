@@ -1,6 +1,6 @@
 name: ️🛠 Task
 description: Create a new development task
-title: '️🛠 - '
+title: 'feat: '
 
 body:
   - type: markdown

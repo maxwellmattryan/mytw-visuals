@@ -81,6 +81,7 @@ apps/
     sketches/     individual sketches (NNN-name/)
     scripts/      CLI tools (new-sketch.ts, convert.sh)
     assets/       static files served at root (images/, fonts/), with their own LICENSE.md
+scripts/          repo-level CLI tools (check-pr-title.ts)
 ```
 
 This is a Yarn workspace. Run every command from the repo root, where `package.json`, `tsconfig.json`, `jest.config.ts` and `eslint.config.ts` cover all workspaces.
@@ -99,6 +100,10 @@ yarn build
 ```
 
 Type-checks, then produces `apps/sketchbook/dist/` with all sketch entry points.
+
+## Versioning and Releases
+
+The repo shares one SemVer version, and release-please cuts `vX.Y.Z` releases from Conventional Commit PR titles. See [RELEASING.md](RELEASING.md).
 
 ## Contributing
 
