@@ -1,6 +1,21 @@
 # mytw-visuals
 
-p5.js creative coding sketchbook for generating visual content — looping animations, static compositions, and audio-reactive visuals. Written in strict TypeScript.
+An open source creative coding project that is today a p5.js sketchbook for generating visual content — looping animations, static compositions, and audio-reactive visuals — and is growing into a local-first visual editor for looping, release-ready music visuals. Mystic Twin, a record label, is its primary user, but it is not built exclusively for Mystic Twin. Written in strict TypeScript.
+
+## Direction
+
+The destination is a local-first editor that takes a visual from an image to an export without writing code, with code sketches staying available where sliders can't express an idea. The plan lives in [GitHub milestones](https://github.com/maxwellmattryan/mytw-visuals/milestones):
+
+- **v0.2 Foundations:** Yarn workspaces, app versioning, open source groundwork
+- **v0.3 Live panel:** schema-driven controls for tuning sketches in real time
+- **v0.4 Engine:** projects as versioned data, rendered and exported by our engine
+- **v0.5 Local editor:** build a visual from an image to an export without writing code
+
+Committed scope stops at v0.5. Anything later is a parked idea, not a commitment.
+
+## Name
+
+The project stays `mytw-visuals`. Mystic Twin is its primary user, so the name is honest about where it came from, and a rename would touch the repo URL, tracker config, workspace scopes and capture path while the product is still a sketchbook. It costs little to revisit when the editor ships under its own product name. Despite the name, the project is not exclusive to the label.
 
 ## Setup
 
@@ -26,7 +41,7 @@ Open `http://localhost:5173` to see the sketch picker.
 yarn new --name my-sketch --template basic
 ```
 
-Templates: `basic`, `shader`, `image`, `audio-reactive`
+Templates: `basic`, `shader`, `image`, `audio-reactive`. The `image` template loads the freely licensed `/images/sample.png`.
 
 Sketches are created in `apps/sketchbook/sketches/NNN-name/` with auto-incrementing numbers, each with its own `index.html` and `sketch.ts`.
 
@@ -65,7 +80,7 @@ apps/
     templates/    sketch templates (basic, shader, image, audio-reactive)
     sketches/     individual sketches (NNN-name/)
     scripts/      CLI tools (new-sketch.ts, convert.sh)
-    assets/       static files served at root (images/, fonts/)
+    assets/       static files served at root (images/, fonts/), with their own LICENSE.md
 ```
 
 This is a Yarn workspace. Run every command from the repo root, where `package.json`, `tsconfig.json`, `jest.config.ts` and `eslint.config.ts` cover all workspaces.
@@ -84,3 +99,11 @@ yarn build
 ```
 
 Type-checks, then produces `apps/sketchbook/dist/` with all sketch entry points.
+
+## Contributing
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for setup, checks, commit style and the rules for adding assets.
+
+## License
+
+Code is licensed under [MIT](LICENSE). Assets are licensed separately, file by file, in [`apps/sketchbook/assets/LICENSE.md`](apps/sketchbook/assets/LICENSE.md): the Mystic Twin artwork is all rights reserved, and the sample image is CC0-1.0. The Mystic Twin name and logos are not licensed.
