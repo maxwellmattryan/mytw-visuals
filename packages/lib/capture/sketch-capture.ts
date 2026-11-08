@@ -158,12 +158,15 @@ export class SketchCapture {
 	/**
 	 * Bind keyboard shortcuts: hold R = record, S = screenshot.
 	 * Wraps existing p.keyPressed/p.keyReleased rather than replacing them.
+	 * R and S are ignored while focus is in an editable element, such as a panel text field.
 	 */
 	bindKeys(p: p5) {
 		const existingPressed = p.keyPressed ? p.keyPressed.bind(p) : null
 		p.keyPressed = () => {
-			if (p.key === 'r' || p.key === 'R') this.start()
-			if (p.key === 's' || p.key === 'S') this.screenshot(p)
+			if (!isTypingTarget(globalThis.document?.activeElement)) {
+				if (p.key === 'r' || p.key === 'R') this.start()
+				if (p.key === 's' || p.key === 'S') this.screenshot(p)
+			}
 			if (existingPressed) existingPressed()
 		}
 
@@ -186,6 +189,21 @@ export function createCapture(
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+const TYPING_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT'])
+
+/**
+ * Whether an element takes typed input: an input, textarea, select or contenteditable element.
+ * Duck-typed so it runs without a DOM.
+ */
+export function isTypingTarget(el: unknown): boolean {
+	if (typeof el !== 'object' || el === null) return false
+	const { tagName, isContentEditable } = el as { tagName?: unknown; isContentEditable?: unknown }
+	return (
+		(typeof tagName === 'string' && TYPING_TAGS.has(tagName.toUpperCase())) ||
+		isContentEditable === true
+	)
+}
 
 export function localTimestamp() {
 	const d = new Date()
