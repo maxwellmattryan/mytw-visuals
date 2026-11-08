@@ -153,6 +153,38 @@ Import the parameter schema from `@mytw/schema`, its package name. It has no DOM
 import { defineSchema, param } from '@mytw/schema'
 ```
 
+### Document Store
+
+`@mytw/document` routes every edit to a project document through one path of plain JSON commands, which gives undo and redo. Like `@mytw/schema`, it has no DOM or WebGL dependency. Create a store from a starting document and a validator that returns `{ ok: true }` or `{ ok: false, issues }`:
+
+```ts
+import { affects, createDocumentStore } from '@mytw/document'
+
+const store = createDocumentStore({ document: initialDoc, validate: validateProject })
+
+store.apply({ op: 'set', path: ['layers', 0, 'opacity'], value: 0.5 })
+store.undo()
+```
+
+The commands are `set`, `remove`, `insert`, `move` and `batch`. A path is an array of object keys and array indexes. `apply` checks the command, applies it and runs the validator as one step: when anything fails it returns `{ ok: false, error }` with `error.code` set to `'malformed'`, `'path'` or `'invalid'`, and the document stays as it was. A batch is all or nothing, and it undoes as one step.
+
+Pass a `mergeKey` to fold a continuous drag into one undo step, and call `seal()` on pointer-up to end it:
+
+```ts
+store.apply({ op: 'set', path: ['layers', 0, 'opacity'], value }, { mergeKey: 'layer-0.opacity' })
+store.seal()
+```
+
+Subscribers get each committed change with the paths it touched, so a view can skip the changes that don't concern it:
+
+```ts
+const unsubscribe = store.subscribe((change) => {
+	if (affects(change, ['layers', 0])) redrawLayer(0)
+})
+```
+
+Documents are never mutated. Each change builds a new root and keeps the identity of unchanged subtrees. `store.load(doc)` replaces the document and clears history.
+
 ## Project Structure
 
 ```
@@ -160,6 +192,7 @@ packages/
   lib/            shared modules (math, colors, shaders, layout, image, capture), each with an index.ts barrel
   schema/         parameter definitions, constraints, clamping and validation (@mytw/schema)
   panel/          Svelte 5 control panel generated from a schema, mounted with mountPanel (@mytw/panel)
+  document/       document store: JSON commands, undo and redo, change notifications (@mytw/document)
 apps/
   sketchbook/     the sketchbook app and Vite root
     index.html    sketch picker page, served at /
