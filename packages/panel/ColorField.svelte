@@ -54,7 +54,7 @@
 		<input
 			type="color"
 			value={value.toLowerCase()}
-			aria-labelledby={labelId}
+			aria-label="{label} picker"
 			oninput={(event) => onapply(event.currentTarget.value)}
 		/>
 		<input

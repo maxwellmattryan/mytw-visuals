@@ -213,7 +213,9 @@
 		line-height: 18px;
 	}
 
-	.panel :global(:focus-visible) {
+	/* Also beats the invalid and highlighted outlines, so focus always shows. */
+	.panel :global(:focus-visible),
+	.panel :global(.highlighted :focus-visible) {
 		outline: 2px solid #7aa2ff;
 		outline-offset: 1px;
 	}
