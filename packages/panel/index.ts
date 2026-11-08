@@ -1,3 +1,5 @@
 export { mountPanel } from './mount'
 export type { Panel, PanelOptions } from './mount'
+export { storageKeyFor } from './snapshots'
+export type { KeyValueStorage } from './snapshots'
 export type { ChangeListener, ConstraintIssue, PanelState, ParamKey, SetResult } from './state'
