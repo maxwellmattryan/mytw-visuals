@@ -8,6 +8,7 @@ import {
 	describedBy,
 	groupParams,
 	isToggleKey,
+	NOT_A_NUMBER,
 	parseNumberInput,
 	sliderFor,
 	stepValue,
@@ -174,6 +175,35 @@ describe('createPanelState', () => {
 		expect(state.errors).toEqual({})
 		expect(state.constraintIssues).toEqual([])
 		expect(listener).toHaveBeenLastCalledWith(values, null)
+	})
+
+	it('replaceAll applies values in place with one change event', () => {
+		const state = createPanelState(makeSchema())
+		const values = state.values
+		const listener = jest.fn()
+		state.onChange(listener)
+		state.setText('speed', 'abc')
+		expect(state.errors.speed).toBe(NOT_A_NUMBER)
+
+		const next = {
+			speed: 2,
+			count: 12,
+			shape: 'square' as const,
+			fill: '#000000',
+			size: 300,
+			cycles: 4,
+			offset: [5, 6] as [number, number],
+			jitter: 1,
+		}
+		state.replaceAll(next)
+
+		expect(state.values).toBe(values)
+		expect(values).toEqual(next)
+		expect(values.offset).not.toBe(next.offset)
+		expect(state.errors).toEqual({})
+		expect(state.constraintIssues.map((issue) => issue.constraint)).toEqual(['size-fits'])
+		expect(listener).toHaveBeenCalledTimes(1)
+		expect(listener).toHaveBeenCalledWith(values, null)
 	})
 
 	it('notifies subscribers of rejected entries but not change listeners', () => {

@@ -31,6 +31,11 @@ export interface PanelState<P extends ParamDefs> {
 	clearError(key: ParamKey<P>): void
 	reset(key: ParamKey<P>): void
 	resetAll(): void
+	/**
+	 * Applies a full value object in place, as a loaded snapshot or pasted values do. Clears every
+	 * field error and fires one change event with `key = null`.
+	 */
+	replaceAll(values: ParamValues<P>): void
 	onChange(fn: ChangeListener<P>): () => void
 	/** Called after any change to values, errors or constraint issues, for the UI to re-render. */
 	subscribe(fn: () => void): () => void
@@ -50,6 +55,7 @@ export interface PanelModel {
 	clearError(key: string): void
 	reset(key: string): void
 	resetAll(): void
+	replaceAll(values: Readonly<Record<string, unknown>>): void
 	subscribe(fn: () => void): () => void
 }
 
@@ -140,6 +146,13 @@ export function createPanelState<P extends ParamDefs>(schema: Schema<P>): PanelS
 		},
 		resetAll() {
 			Object.assign(values, defaults(schema))
+			for (const key of Object.keys(errors)) delete errors[key as ParamKey<P>]
+			constraintIssues = constraintIssuesOf(validate(schema, record))
+			changed(null)
+		},
+		replaceAll(next) {
+			const source: Readonly<Record<string, unknown>> = next
+			for (const key of Object.keys(schema.params)) record[key] = copyValue(source[key])
 			for (const key of Object.keys(errors)) delete errors[key as ParamKey<P>]
 			constraintIssues = constraintIssuesOf(validate(schema, record))
 			changed(null)
@@ -250,6 +263,13 @@ export interface KeyLike {
 /** Whether a key press toggles the panel: `h` or `H`, unmodified, outside editable elements. */
 export function isToggleKey(event: KeyLike, active: unknown): boolean {
 	if (event.key !== 'h' && event.key !== 'H') return false
+	if (event.ctrlKey || event.metaKey || event.altKey) return false
+	return !isTypingTarget(active)
+}
+
+/** Whether a key press swaps A and B during a compare: `b` or `B`, unmodified, outside editable elements. */
+export function isCompareKey(event: KeyLike, active: unknown): boolean {
+	if (event.key !== 'b' && event.key !== 'B') return false
 	if (event.ctrlKey || event.metaKey || event.altKey) return false
 	return !isTypingTarget(active)
 }
