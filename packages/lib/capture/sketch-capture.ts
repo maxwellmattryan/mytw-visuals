@@ -29,6 +29,7 @@ export class SketchCapture {
 	private _buffer: HTMLCanvasElement | null
 	private _bufferCtx: CanvasRenderingContext2D | null
 	private _indicator: HTMLDivElement | null
+	private _flushing: Promise<void> | null
 
 	constructor(canvas: HTMLCanvasElement, options: CaptureOptions = {}) {
 		this.canvas = canvas
@@ -41,6 +42,7 @@ export class SketchCapture {
 		this._buffer = null
 		this._bufferCtx = null
 		this._indicator = null
+		this._flushing = null
 	}
 
 	/** Frames captured by the current recording, or by the last one until the next `start()`. */
@@ -53,7 +55,15 @@ export class SketchCapture {
 		return this._frameLimit
 	}
 
+	/** Resolves once the last recording's frames are uploaded and its session is closed. */
+	flushed(): Promise<void> {
+		return this._flushing ?? Promise.resolve()
+	}
+
 	async start(options: StartOptions = {}) {
+		if (this.recording) return
+		// The previous session's flush still uses the shared session state, so let it finish first.
+		await this.flushed()
 		if (this.recording) return
 		this._session = localTimestamp()
 		this._pending = 0
@@ -117,7 +127,10 @@ export class SketchCapture {
 		this._frameLimit = null
 		this._hideIndicator()
 		console.log('[capture] Recording stopped — flushing frames…')
-		this._finish()
+		const flushing = this._finish().finally(() => {
+			if (this._flushing === flushing) this._flushing = null
+		})
+		this._flushing = flushing
 	}
 
 	async _finish() {
@@ -140,8 +153,7 @@ export class SketchCapture {
 		}
 
 		this._session = null
-		// A recording started during the flush keeps its own limit.
-		if (!this.recording) this._frameLimit = null
+		this._frameLimit = null
 		this._buffer = null
 		this._bufferCtx = null
 	}
