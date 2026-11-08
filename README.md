@@ -52,8 +52,9 @@ Sketches are created in `apps/sketchbook/sketches/NNN-name/` with auto-increment
 | Hold `R` | Record PNG frames (dev only) |
 | `S`      | Save screenshot (PNG)        |
 | `H`      | Hide or show the panel       |
+| `B`      | Swap A and B in a compare    |
 
-`R` and `S` do nothing while you type in a text field, and neither does `H`.
+`R` and `S` do nothing while you type in a text field, and neither do `H` and `B`. `B` only acts during a snapshot compare.
 
 ## Parameter Panel
 
@@ -73,6 +74,39 @@ The panel floats at the top left, outside the canvas, so recordings and screensh
 Give a parameter an optional `help` string to explain it. It is plain text, and the panel shows it as a muted line under the control.
 
 Every template, and so every sketch from `yarn new`, starts with a small schema and a mounted panel.
+
+### Snapshots
+
+Panel values persist in the browser's `localStorage`, one entry per sketch, so a reload keeps your tweaks. Saved values are checked against the current schema when they load: unknown keys are dropped, missing ones get their default, and out-of-range numbers are clamped. The status line then says how many values it adjusted. Values are written 250 ms after the last change, never per frame.
+
+The **Snapshots** section at the bottom of the panel (collapsed at first) keeps named settings:
+
+- **Save** stores the current values under a name (`Snapshot N` when left empty). Each snapshot can be loaded, renamed or deleted.
+- **Compare** keeps your current values as A and shows the snapshot as B. Press `B` or **Swap A/B** to flip between them, then **Keep A** or **Keep B**. Editing a control during a compare ends it and keeps what you see.
+- **Copy JSON** copies the shown values. **Paste JSON** with **Apply**, or **Import file** (up to 1 MB), applies values from JSON. Values that don't fit are adjusted and listed, and input that can't be used is rejected with the reason.
+
+The JSON is a small versioned envelope. A bare values object such as `{ "speed": 2 }` is accepted too:
+
+```json
+{
+	"format": "mytw-params",
+	"version": 1,
+	"values": { "speed": 2, "count": 6 }
+}
+```
+
+`serializeValues` and `parseValues` in `@mytw/schema` read and write it. A later format change bumps `version` and adds a migration, so older JSON keeps loading.
+
+Two `mountPanel` options control persistence:
+
+```ts
+mountPanel(schema, {
+	storageKey: 'my-sketch', // defaults to a key from location.pathname
+	storage: null, // turns persistence off; snapshots then last until reload
+})
+```
+
+`storage` also accepts any object with `getItem` and `setItem`. If storage is unavailable or holds data the panel can't read, the panel starts from defaults. If a write fails, such as when storage is full, your values stay as they are. Either way the status line says so, and values and snapshots keep working in memory until reload.
 
 ## Export
 
