@@ -13,7 +13,8 @@
 		"types": ["node"],
 		"paths": {
 			"@lib": ["./packages/lib/index.ts"],
-			"@lib/*": ["./packages/lib/*"]
+			"@lib/*": ["./packages/lib/*"],
+			"@mytw/schema": ["./packages/schema/index.ts"]
 		}
 	},
 	"ts-node": {
