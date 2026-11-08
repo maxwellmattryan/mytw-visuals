@@ -9,7 +9,7 @@
 	],
 	"scripts": {
 		"dev": "yarn workspace @mytw/sketchbook dev",
-		"build": "tsc --noEmit && yarn workspace @mytw/sketchbook build",
+		"build": "tsc --noEmit && tsc -p packages/schema && yarn workspace @mytw/sketchbook build",
 		"preview": "yarn workspace @mytw/sketchbook preview",
 		"new": "yarn workspace @mytw/sketchbook new",
 		"lint": "eslint .",

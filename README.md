@@ -67,11 +67,18 @@ Import shared code from nested modules with extensionless `@lib` specifiers. The
 import { createCanvas, SIZES } from '@lib/layout'
 ```
 
+Import the parameter schema from `@mytw/schema`, its package name. It has no DOM or p5 dependency, and `yarn build` type-checks it without DOM types:
+
+```ts
+import { defineSchema, param } from '@mytw/schema'
+```
+
 ## Project Structure
 
 ```
 packages/
   lib/            shared modules (math, colors, shaders, layout, image, capture), each with an index.ts barrel
+  schema/         parameter definitions, constraints, clamping and validation (@mytw/schema)
 apps/
   sketchbook/     the sketchbook app and Vite root
     index.html    sketch picker page, served at /
