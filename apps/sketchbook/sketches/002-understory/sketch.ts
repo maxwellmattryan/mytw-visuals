@@ -5,11 +5,15 @@ import { createCapture } from '@lib/capture'
 import type { SketchCapture } from '@lib/capture'
 import { coverImage } from '@lib/image'
 import { loopValue } from '@lib/math'
+import { mountPanel } from '@mytw/panel'
+import type { Panel } from '@mytw/panel'
+import type { ParamValues } from '@mytw/schema'
+import { understorySchema } from './params'
 
 const TAU = Math.PI * 2
 
 // ---------------------------------------------------------------------------
-// CONFIG — the whole sketch distilled to knobs.
+// Understory — the knobs live in ./params.ts and are tuned live in the panel.
 //
 // A readable BASE composition multiplied by a single mirrored "ghost" of the
 // same image:   composite = base * ghost
@@ -18,119 +22,83 @@ const TAU = Math.PI * 2
 // left-of-center, the X-flip lands it on the OTHER side of the base's cluster,
 // so the result doesn't read as the same image overlaid on itself.
 //
-// UNISON MOTION: one shared `motion` morphs both layers together — same drift
+// UNISON MOTION: one shared motion morphs both layers together — same drift
 // direction, shared breathe, shared caustic warp — so they move in unison. The
-// ghost travels a bit less (motion.ghostScale < 1) for a subtle parallax lag and
-// adds its own gentle wobble. (Set motion.ghostContrary: true to make it oppose.)
+// ghost travels a bit less (ghostScale < 1) for a subtle parallax lag and adds
+// its own gentle wobble. (Turn on ghostContrary to make it oppose.)
 //
 // NO HARD EDGES: a layer only shows its rectangular window if it samples past
-// the image. For drift keep zoom >= 1 / (1 - 2 * driftAmp); the ghost's larger
-// zoom leaves plenty of margin.
+// the image. For drift keep zoom >= 1 / (1 - 2 * driftAmp); the schema checks
+// this for both layers, and the ghost's larger zoom leaves plenty of margin.
 //
-// Loop-ability: every *Cycles is an INTEGER, so each sinusoid completes whole
-// cycles over the loop and the last frame equals the first — seamless.
-// loopFrames is the master speed (longer loop = slower motion at the same fps).
+// Loop-ability: every *Cycles is an INTEGER (enforced by the schema), so each
+// sinusoid completes whole cycles over the loop and the last frame equals the
+// first — seamless. loopFrames is the master speed (longer loop = slower
+// motion at the same fps).
 // ---------------------------------------------------------------------------
-const CONFIG = {
-	// Loop / recording — seamless, 7.5s clip (9:16). Just under Spotify Canvas's 8s
-	// ceiling so its re-encode can't trim the loop-critical final frame.
-	fps: 30,
-	loopFrames: 225, // 7.5s loop at 30fps — MASTER SPEED (higher = slower)
+type Values = ParamValues<typeof understorySchema>
 
-	// Shared motion. Both layers morph in UNISON: same drift direction, shared
-	// breathe, shared caustic warp. The ghost just travels a bit less (ghostScale)
-	// for a subtle parallax lag. Set ghostContrary: true to make it oppose instead.
-	motion: {
-		driftAmp: 0.012, // travel radius (UV) — smaller = slower / less distance
-		ghostScale: 0.8, // ghost travels this fraction of the base's distance
-		ghostContrary: false, // false = ghost drifts WITH the base (unison); true = opposite
-		driftCyclesX: 1, // x oscillations per loop (integer)
-		driftCyclesY: 1, // y oscillations per loop (integer); != X => figure-8
-		driftPhase: 0.0,
-		spin: 0, // rotation off
-		wobbleAmp: 0.0,
-		wobbleCycles: 1,
-		wobblePhase: 0.0,
-		breatheAmp: 0.022, // shared in/out scale pulse — both layers breathe together
-		breatheCycles: 1, // breaths per loop (integer = seamless)
-		breathePhase: 0.0,
-	},
-
-	// Base layer — framing only. Travels along the +motion path. Reframed off the
-	// central rose and onto the LOWER buds/pods via centerX/Y. Zoomed in so that
-	// near-edge focal point stays edge-free under drift + breathe.
-	// NOTE: the buffer is drawn with a Y-flip — if this frames the wrong half
-	// vertically, use centerY = 1 - value (i.e. 0.34 instead of 0.66).
-	base: {
-		zoom: 2, // tighter crop on the lower blooms; keeps drift + breathe edge-free
-		centerX: 0.5,
-		centerY: 0.72, // toward the lower portion of the photo (buds/pods)
-		mirrorX: false,
-		mirrorY: false,
-		tilt: 0.0,
-	},
-
-	// Ghost — a single mirrored copy. Travels contrary to the base, and rotates
-	// cleanly about the center. Reframed onto a DIFFERENT bloom than the base: the
-	// smaller rose just right of the central cluster. It's well inside the frame,
-	// so a gentle zoom keeps it edge-free. Mirrored on X, it renders left-of-center,
-	// balancing the base's lower-right buds.
-	// NOTE: same Y-flip caveat as the base — if vertical is inverted, use
-	// centerY = 1 - value (i.e. 0.60 instead of 0.40).
-	//
-	// Two seamless ways to rotate the ghost (the base never rotates):
-	//  - spin: WHOLE turns per loop (integer). 0 = off. The only seamless way to
-	//    spin continuously in one direction; the slowest non-zero option is 1.
-	//  - wobble: a sine SWAY back-and-forth. Any amplitude loops cleanly, so this
-	//    gives a slow rocking rotation without committing to a full turn.
-	ghost: {
-		zoom: 3.4, // gentle crop on the interior rose; keeps the focal edge-free
-		centerX: 0.2,
-		centerY: 0.25, // just right-of and above center (the smaller rose)
-		mirrorX: true,
-		mirrorY: false,
-		tilt: 0.0,
-		spin: 0, // whole turns per loop (integer = seamless); 0 = no continuous spin
-		wobbleAmp: 0.03, // rotational sway in radians (~2°); any amount stays seamless
-		wobbleCycles: 1, // sways per loop (integer = seamless)
-		wobblePhase: 0.0,
-
-		// Vertical visibility gradient (screen-space Y in [0,1]): the ghost is fully
-		// visible at `fadeStart` and fades to invisible (contributes white = no
-		// darkening) by `fadeEnd`. Default: visible from the midpoint up, gone by the
-		// bottom. If it fades the wrong end, swap the two values (e.g. end: 0.0).
-		fadeStart: 0.0, // fully visible from here toward the top
-		fadeEnd: 1.0, // fully faded out by here (the bottom)
-	},
-
-	// Look
-	intensity: 1.0, // multiply strength (0 = base only, 1 = full)
-	vignette: 0.2, // 0 = off, 1 = strong edge darkening
-	feather: 0.06, // soft layer-edge falloff (UV)
-	hueShift: -15, // degrees of hue rotation; negative = toward green, positive = toward blue
-
-	// Caustic shimmer — domain-warped wobble that perturbs BOTH layers together,
-	// like the flowers seen through moving water / heat haze. Seamless: the noise
-	// field is sampled along a circular path so phase 0 == phase 1.
-	caustic: {
-		amp: 0.005, // UV displacement amount (0 = off)
-		scale: 2.0, // noise frequency (higher = finer ripples)
-		loopRadius: 0.8, // radius of the noise's circular loop path
-	},
-
-	// Chromatic aberration — very subtle radial RGB split, growing toward the
-	// edges (zero at center). Lens-like fringe; keep it tiny. PULSES over the loop:
-	// the split swells from `base` up to `base + pulseAmp` and back, seamlessly.
-	aberration: {
-		base: 0.001, // constant split floor (UV offset at the edge)
-		pulseAmp: 0.01, // extra split added at each pulse peak
-		pulseCycles: 1, // pulses per loop (integer = seamless)
-		pulsePhase: 0.0,
-	},
+interface LayerFraming {
+	zoom: number
+	centerX: number
+	centerY: number
+	mirrorX: boolean
+	mirrorY: boolean
+	tilt: number
 }
 
-type LayerFraming = typeof CONFIG.base
-type LayerMotion = typeof CONFIG.motion
+interface LayerMotion {
+	driftAmp: number
+	driftCyclesX: number
+	driftCyclesY: number
+	driftPhase: number
+	spin: number
+	wobbleAmp: number
+	wobbleCycles: number
+	wobblePhase: number
+	breatheAmp: number
+	breatheCycles: number
+	breathePhase: number
+}
+
+function baseFraming(v: Values): LayerFraming {
+	return {
+		zoom: v.baseZoom,
+		centerX: v.baseCenterX,
+		centerY: v.baseCenterY,
+		mirrorX: v.baseMirrorX,
+		mirrorY: v.baseMirrorY,
+		tilt: v.baseTilt,
+	}
+}
+
+function ghostFraming(v: Values): LayerFraming {
+	return {
+		zoom: v.ghostZoom,
+		centerX: v.ghostCenterX,
+		centerY: v.ghostCenterY,
+		mirrorX: v.ghostMirrorX,
+		mirrorY: v.ghostMirrorY,
+		tilt: v.ghostTilt,
+	}
+}
+
+function motionOf(v: Values): LayerMotion {
+	return {
+		driftAmp: v.driftAmp,
+		driftCyclesX: v.driftCyclesX,
+		driftCyclesY: v.driftCyclesY,
+		driftPhase: v.driftPhase,
+		spin: v.spin,
+		wobbleAmp: v.wobbleAmp,
+		wobbleCycles: v.wobbleCycles,
+		wobblePhase: v.wobblePhase,
+		breatheAmp: v.breatheAmp,
+		breatheCycles: v.breatheCycles,
+		breathePhase: v.breathePhase,
+	}
+}
+
 type LayerTransform = ReturnType<typeof evalTransform>
 
 // Evaluate a transform at loop phase t in [0,1). The factor scales the motion:
@@ -336,6 +304,7 @@ const sketch = (p: p5) => {
 	let shd: p5.Shader
 	let img: p5.Image
 	let gfx: p5.Graphics
+	let panel: Panel<typeof understorySchema.params>
 	let recordStartFrame = -1
 
 	p.preload = () => {
@@ -344,7 +313,6 @@ const sketch = (p: p5) => {
 
 	p.setup = () => {
 		cnv = createWebGLCanvas(p, SIZES.STORY)
-		p.frameRate(CONFIG.fps)
 
 		// Pre-render the base to an offscreen 2D buffer at the image's NATIVE
 		// resolution (1688x3000), not the canvas size — so zooming the shader's
@@ -355,11 +323,23 @@ const sketch = (p: p5) => {
 
 		shd = compileFilterShader(p, FRAG_UNDERSTORY)
 
-		cap = createCapture(cnv.elt, { framerate: CONFIG.fps })
+		cap = createCapture(cnv.elt)
 		cap.bindKeys(p)
+
+		panel = mountPanel(understorySchema)
+		const applyFps = (fps: number) => {
+			p.frameRate(fps)
+			cap.framerate = fps
+		}
+		applyFps(panel.values.fps)
+		panel.onChange((v, key) => {
+			if (key === 'fps' || key === null) applyFps(v.fps)
+		})
 	}
 
 	p.draw = () => {
+		const v = panel.values
+
 		// Anchor the loop origin to the FIRST recorded frame, so the captured clip
 		// begins exactly at phase 0. (cap.bindKeys flips cap.recording on a frame
 		// that has already been drawn; anchoring here — not in keyPressed — keeps
@@ -372,54 +352,57 @@ const sketch = (p: p5) => {
 
 		const origin = recordStartFrame >= 0 ? recordStartFrame : 0
 		const offset = p.frameCount - origin
-		const phase = loopValue(offset, CONFIG.loopFrames)
+		const phase = loopValue(offset, v.loopFrames)
 
 		// Base travels +motion; the ghost travels WITH it (unison) a bit slower,
 		// unless ghostContrary flips it to oppose.
-		const ghostDir = CONFIG.motion.ghostContrary ? -1 : 1
-		const ghostFactor = ghostDir * CONFIG.motion.ghostScale
-		const baseTf = evalTransform(phase, CONFIG.base, CONFIG.motion, 1)
-		const ghostTf = evalTransform(phase, CONFIG.ghost, CONFIG.motion, ghostFactor)
+		const base = baseFraming(v)
+		const ghost = ghostFraming(v)
+		const motion = motionOf(v)
+		const ghostDir = v.ghostContrary ? -1 : 1
+		const ghostFactor = ghostDir * v.ghostScale
+		const baseTf = evalTransform(phase, base, motion, 1)
+		const ghostTf = evalTransform(phase, ghost, motion, ghostFactor)
 		// Ghost-only rotation (the base never rotates): a whole-turn spin and/or a
 		// seamless back-and-forth wobble. Both return to 0 at phase 1.
-		ghostTf.angle += CONFIG.ghost.spin * phase * TAU
+		ghostTf.angle += v.ghostSpin * phase * TAU
 		ghostTf.angle +=
-			CONFIG.ghost.wobbleAmp *
-			Math.sin(CONFIG.ghost.wobbleCycles * phase * TAU + CONFIG.ghost.wobblePhase)
+			v.ghostWobbleAmp * Math.sin(v.ghostWobbleCycles * phase * TAU + v.ghostWobblePhase)
 
 		p.shader(shd)
 		shd.setUniform('uTex', gfx)
-		setLayerUniforms(shd, 'uBase', CONFIG.base, baseTf)
-		setLayerUniforms(shd, 'uG', CONFIG.ghost, ghostTf)
-		shd.setUniform('uIntensity', CONFIG.intensity)
-		shd.setUniform('uVignette', CONFIG.vignette)
-		shd.setUniform('uFeather', CONFIG.feather)
+		setLayerUniforms(shd, 'uBase', base, baseTf)
+		setLayerUniforms(shd, 'uG', ghost, ghostTf)
+		shd.setUniform('uIntensity', v.intensity)
+		shd.setUniform('uVignette', v.vignette)
+		shd.setUniform('uFeather', v.feather)
 
 		// Animated effects — all driven by the shared loop phase to stay seamless.
 		shd.setUniform('uPhase', phase)
 
-		shd.setUniform('uCausticAmp', CONFIG.caustic.amp)
-		shd.setUniform('uCausticScale', CONFIG.caustic.scale)
-		shd.setUniform('uCausticRadius', CONFIG.caustic.loopRadius)
+		shd.setUniform('uCausticAmp', v.causticAmp)
+		shd.setUniform('uCausticScale', v.causticScale)
+		shd.setUniform('uCausticRadius', v.causticLoopRadius)
 
 		// Pulsing chromatic aberration: swell from base up to base+pulseAmp and back.
 		// (0.5 - 0.5*cos) rises from 0 at phase 0; integer pulseCycles => seamless.
-		const ab = CONFIG.aberration
 		const aberration =
-			ab.base + ab.pulseAmp * (0.5 - 0.5 * Math.cos(ab.pulseCycles * phase * TAU + ab.pulsePhase))
+			v.aberrationBase +
+			v.aberrationPulseAmp *
+				(0.5 - 0.5 * Math.cos(v.aberrationPulseCycles * phase * TAU + v.aberrationPulsePhase))
 		shd.setUniform('uAberration', aberration)
 
-		shd.setUniform('uGhostFadeStart', CONFIG.ghost.fadeStart)
-		shd.setUniform('uGhostFadeEnd', CONFIG.ghost.fadeEnd)
+		shd.setUniform('uGhostFadeStart', v.ghostFadeStart)
+		shd.setUniform('uGhostFadeEnd', v.ghostFadeEnd)
 
-		shd.setUniform('uHueShift', (CONFIG.hueShift * Math.PI) / 180)
+		shd.setUniform('uHueShift', (v.hueShift * Math.PI) / 180)
 
 		p.rect(0, 0, p.width, p.height)
 
 		// Auto-stop after exactly one loop. Stop BEFORE capturing the wrap frame
 		// (offset == loopFrames is phase 0 again), keeping exactly loopFrames frames:
 		// offsets 0 .. loopFrames-1, i.e. phases 0 .. (loopFrames-1)/loopFrames.
-		if (cap.recording && offset >= CONFIG.loopFrames) {
+		if (cap.recording && offset >= v.loopFrames) {
 			cap.stop()
 			recordStartFrame = -1
 		}

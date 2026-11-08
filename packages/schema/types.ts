@@ -4,6 +4,8 @@ interface BaseParam<T> {
 	readonly default: T
 	readonly unit?: string
 	readonly group?: string
+	/** Plain-text help shown under the control. */
+	readonly help?: string
 }
 
 /** Optional inclusive range. `step` is a UI hint only and never snaps values. */

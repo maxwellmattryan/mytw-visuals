@@ -231,6 +231,12 @@ export function stepValue(
 	return next
 }
 
+/** An `aria-describedby` value from the ids that exist, or `undefined` when none do. */
+export function describedBy(...ids: (string | undefined)[]): string | undefined {
+	const present = ids.filter((id): id is string => id !== undefined)
+	return present.length > 0 ? present.join(' ') : undefined
+}
+
 /** Whether an element takes typed input, so single-key shortcuts must ignore it. */
 export { isTypingTarget as isEditableTarget }
 

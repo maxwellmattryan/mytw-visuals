@@ -4,17 +4,27 @@ import { SIZES, createWebGLCanvas, centerCanvas } from '@lib/layout'
 import { VERT_DEFAULT, FRAG_PASSTHROUGH, compileFilterShader } from '@lib/shaders'
 import { createCapture } from '@lib/capture'
 import type { SketchCapture } from '@lib/capture'
+import { mountPanel } from '@mytw/panel'
+import type { Panel } from '@mytw/panel'
+import { defineSchema, param } from '@mytw/schema'
+
+// Add params here; read them from panel.values in draw().
+const schema = defineSchema({
+	background: param.color({ label: 'Background', default: '#000000' }),
+})
 
 const sketch = (p: p5) => {
 	let cnv: p5.Renderer
 	let cap: SketchCapture
 	let gfx: p5.Graphics
 	let shd: p5.Shader
+	let panel: Panel<typeof schema.params>
 
 	p.setup = () => {
 		cnv = createWebGLCanvas(p, SIZES.SQUARE)
 		cap = createCapture(cnv.elt)
 		cap.bindKeys(p)
+		panel = mountPanel(schema)
 
 		gfx = p.createGraphics(SIZES.SQUARE.width, SIZES.SQUARE.height)
 		shd = compileFilterShader(p, FRAG_PASSTHROUGH())
@@ -22,7 +32,7 @@ const sketch = (p: p5) => {
 
 	p.draw = () => {
 		// Draw scene to offscreen buffer
-		gfx.background(0)
+		gfx.background(panel.values.background)
 
 		// --- draw to gfx here ---
 

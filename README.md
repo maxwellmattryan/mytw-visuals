@@ -70,6 +70,10 @@ p.draw = () => {
 
 The panel floats at the top left, outside the canvas, so recordings and screenshots never include it. Press `H` to hide it. `apps/sketchbook/sketches/003-panel-demo/` shows every control kind.
 
+Give a parameter an optional `help` string to explain it. It is plain text, and the panel shows it as a muted line under the control.
+
+Every template, and so every sketch from `yarn new`, starts with a small schema and a mounted panel.
+
 ## Export
 
 - **Video**: Hold `R` to record, release to stop. A red dot shows while recording. Each frame is POSTed as a PNG to the dev server, which writes it to `~/Downloads/mytw-captures/<session>/`. Convert a session to MP4 by hand with `yarn convert <dir>`; the console prints the exact command. Recording needs `yarn dev`, and there is no fallback download. The capture endpoints only accept same-origin requests with a timestamp session name.
