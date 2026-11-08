@@ -137,6 +137,10 @@ The transport floats at the bottom right, outside the canvas, so recordings and 
 - **One loop**: In a sketch with a transport, **Record loop** records exactly `loopFrames` frames from phase 0, then stops by itself.
 - **Screenshot**: Press `S` to save a PNG of the current frame.
 
+## Project Format
+
+A project is a versioned JSON document (`"format": "mytw-project"`) that describes a looping visual as data: output size, timeline, content-addressed image assets, modulators, tracks of clips and layers, and effect chains. Nothing renders it yet. `@mytw/schema` reads, validates, migrates and writes it with `parseProject`, `validateProject`, `migrateProject` and `serializeProject`. See [docs/project-format.md](docs/project-format.md) for the full v1 specification, including how to add a version. Example documents live in `packages/schema/fixtures/`.
+
 ## TypeScript
 
 All code, including config files, is strict TypeScript with no `any` or type-check suppressions. `yarn build` runs `tsc --noEmit` over every workspace first, so a type error fails the build before Vite runs.
@@ -190,7 +194,7 @@ Documents are never mutated. Each change builds a new root and keeps the identit
 ```
 packages/
   lib/            shared modules (math, colors, shaders, layout, image, capture), each with an index.ts barrel
-  schema/         parameter definitions, constraints, clamping and validation (@mytw/schema)
+  schema/         parameter definitions, constraints, clamping and validation, and the project format (@mytw/schema)
   panel/          Svelte 5 control panel generated from a schema, mounted with mountPanel (@mytw/panel)
   document/       document store: JSON commands, undo and redo, change notifications (@mytw/document)
 apps/
@@ -203,6 +207,7 @@ apps/
     scripts/      CLI tools (new-sketch.ts, convert.sh)
     assets/       static files served at root (images/, fonts/), with their own LICENSE.md
 scripts/          repo-level CLI tools (check-pr-title.ts)
+docs/             specifications (project-format.md)
 ```
 
 This is a Yarn workspace. Run every command from the repo root, where `package.json`, `tsconfig.json`, `jest.config.ts` and `eslint.config.ts` cover all workspaces.
