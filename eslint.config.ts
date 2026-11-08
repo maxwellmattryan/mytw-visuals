@@ -36,6 +36,19 @@ export default [
 		},
 	},
 	{
+		// The engine is UI-free and p5-free, so the editor, exporter and player can share it.
+		files: ['packages/engine/**/*.ts'],
+		rules: {
+			'no-restricted-imports': [
+				'error',
+				{
+					paths: ['p5', 'svelte', '@mytw/panel', '@lib'],
+					patterns: ['svelte/*', '@lib/*'],
+				},
+			],
+		},
+	},
+	{
 		files: ['**/__tests__/**/*.ts'],
 		languageOptions: {
 			globals: {
