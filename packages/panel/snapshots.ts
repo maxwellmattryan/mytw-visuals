@@ -287,9 +287,11 @@ export function createSnapshotStore<P extends ParamDefs>(
 		const shown = comparing.side
 		const next = side === 'a' ? stashA : valuesB
 		endCompare()
-		if (side !== shown) applyOwn(next)
 		notify()
-		write()
+		// A change event already makes the panel persist; with no change, persist now so the
+		// stored current values move from A to the kept side.
+		if (side !== shown) applyOwn(next)
+		else write()
 	}
 
 	return {

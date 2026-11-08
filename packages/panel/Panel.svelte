@@ -1,18 +1,22 @@
 <script lang="ts">
 	import Group from './Group.svelte'
+	import CompareBar from './CompareBar.svelte'
 	import ParamRow from './ParamRow.svelte'
+	import Snapshots from './Snapshots.svelte'
+	import type { SnapshotStore } from './snapshots'
 	import { groupParams } from './state'
 	import type { PanelModel } from './state'
 
 	interface Props {
 		model: PanelModel
+		store: SnapshotStore
 		title: string
 		/** Unique per mounted panel, so two panels never share element ids. */
 		idPrefix: string
 		onhide: () => void
 	}
 
-	let { model, title, idPrefix, onhide }: Props = $props()
+	let { model, store, title, idPrefix, onhide }: Props = $props()
 
 	// `model.values` stays a plain object. This counter tells the rows to read it again.
 	let version = $state(0)
@@ -28,6 +32,18 @@
 		return model.constraintIssues
 	})
 	const highlighted = $derived(new Set<string>(issues.flatMap((issue) => issue.params)))
+
+	// The same pattern for the snapshot store's list, status and compare state.
+	let storeVersion = $state(0)
+	$effect(() =>
+		store.subscribe(() => {
+			storeVersion += 1
+		})
+	)
+	const comparing = $derived.by(() => {
+		void storeVersion
+		return store.comparing
+	})
 </script>
 
 <section class="panel" aria-labelledby="{idPrefix}-title">
@@ -38,6 +54,10 @@
 			>Hide</button
 		>
 	</header>
+
+	{#if comparing}
+		<CompareBar {store} {comparing} {idPrefix} />
+	{/if}
 
 	<div class="issues" role="status">
 		{#each issues as issue (issue.constraint)}
@@ -60,6 +80,8 @@
 			</Group>
 		{/if}
 	{/each}
+
+	<Snapshots {store} version={storeVersion} {idPrefix} />
 </section>
 
 <style>

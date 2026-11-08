@@ -1,10 +1,17 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte'
 
-	let { name, children }: { name: string; children: Snippet } = $props()
+	interface Props {
+		name: string
+		/** Whether the group starts expanded. Bind it to follow the user's toggles. */
+		open?: boolean
+		children: Snippet
+	}
+
+	let { name, open = $bindable(true), children }: Props = $props()
 </script>
 
-<details open>
+<details bind:open>
 	<summary>{name}</summary>
 	<div class="body">{@render children()}</div>
 </details>
