@@ -4,38 +4,12 @@ import { compileFilterShader } from '@lib/shaders'
 import { createCapture } from '@lib/capture'
 import type { SketchCapture } from '@lib/capture'
 import { coverImage } from '@lib/image'
+import { mountPanel } from '@mytw/panel'
+import type { Panel } from '@mytw/panel'
+import { loopSpeed, waveDisplacementSchema } from './params'
 
-// ---------------------------------------------------------------------------
-// CONFIG — tweak these values to adjust the effect
-// ---------------------------------------------------------------------------
-const CONFIG = {
-	// Wave displacement
-	primaryFreq: 3.0, // sine wave cycles across image
-	primarySpeed: Math.PI / 4, // 1 cycle per loop (speed × 8s = 2π)
-	primaryAmplitude: 0.018, // UV displacement amount (0.01–0.03 range)
-	secondaryFreq: 2.0,
-	secondarySpeed: Math.PI / 4, // 1 cycle per loop
-	secondaryAmplitude: 0.01,
-
-	// Vertical pulse — displacement is stronger at bottom, travels upward
-	verticalPulseSpeed: Math.PI / 2, // 2 cycles per loop
-	verticalPulseFreq: 5.0, // wave density along vertical axis
-	verticalPulseDepth: 0.6, // 0 = no pulse, 1 = full bottom-up modulation
-
-	// Hue shift — subtle color drift on its own cycle
-	hueShiftAmount: 0.6, // max hue rotation in radians (~8°)
-	hueShiftSpeed: Math.PI / 4, // 1 cycle per loop
-
-	// Chromatic aberration
-	chromaticAmount: 0.006, // base RGB offset amount
-	chromaticPulseSpeed: Math.PI / 4, // 1 cycle per loop
-	chromaticPulseDepth: 0.85, // 0 = steady, 1 = pulses to zero
-
-	// Loop & recording
-	loopDuration: 8, // seconds — all speeds quantized for seamless loop
-	recordFrames: 384, // 8s at 48fps — one complete loop
-	fps: 48,
-}
+// The knobs live in ./params.ts and are tuned live in the panel. Every speed is
+// derived from a whole number of cycles per loop, so the loop stays seamless.
 
 // ---------------------------------------------------------------------------
 // Fragment shader — sine wave UV displacement + pulsing chromatic aberration
@@ -106,6 +80,7 @@ const sketch = (p: p5) => {
 	let gfx: p5.Graphics
 	let shd: p5.Shader
 	let img: p5.Image
+	let panel: Panel<typeof waveDisplacementSchema.params>
 	let recordStartFrame = -1
 
 	p.preload = () => {
@@ -114,13 +89,22 @@ const sketch = (p: p5) => {
 
 	p.setup = () => {
 		cnv = createWebGLCanvas(p, SIZES.STORY)
-		p.frameRate(CONFIG.fps)
 
 		gfx = p.createGraphics(SIZES.STORY.width, SIZES.STORY.height)
 		shd = compileFilterShader(p, FRAG_WAVE_DISPLACEMENT)
 
-		cap = createCapture(cnv.elt, { framerate: CONFIG.fps })
+		cap = createCapture(cnv.elt)
 		cap.bindKeys(p)
+
+		panel = mountPanel(waveDisplacementSchema)
+		const applyFps = (fps: number) => {
+			p.frameRate(fps)
+			cap.framerate = fps
+		}
+		applyFps(panel.values.fps)
+		panel.onChange((v, key) => {
+			if (key === 'fps' || key === null) applyFps(v.fps)
+		})
 
 		// Wrap keyPressed to track recording start frame for auto-stop
 		const existingKeyPressed = p.keyPressed
@@ -133,17 +117,21 @@ const sketch = (p: p5) => {
 	}
 
 	p.draw = () => {
-		// Looping time in seconds — wraps every 8s for seamless loop
-		const loopFrames = CONFIG.loopDuration * CONFIG.fps
-		const time = (p.frameCount % loopFrames) / CONFIG.fps
+		const v = panel.values
+
+		// Looping time in seconds — wraps every loopDuration for a seamless loop.
+		// A recording is exactly one loop of these frames.
+		const loopFrames = v.loopDuration * v.fps
+		const time = (p.frameCount % loopFrames) / v.fps
 
 		// Hue shift drifts on its own slow cycle
-		const hueShift = Math.sin(time * CONFIG.hueShiftSpeed) * CONFIG.hueShiftAmount
+		const hueShift = Math.sin(time * loopSpeed(v.hueShiftCycles, v.loopDuration)) * v.hueShiftAmount
 
 		// Chromatic aberration pulses independently
+		const chromaticPulseSpeed = loopSpeed(v.chromaticPulseCycles, v.loopDuration)
 		const chromPulse =
-			1.0 - CONFIG.chromaticPulseDepth * (0.5 + 0.5 * Math.sin(time * CONFIG.chromaticPulseSpeed))
-		const chromAmount = CONFIG.chromaticAmount * chromPulse
+			1.0 - v.chromaticPulseDepth * (0.5 + 0.5 * Math.sin(time * chromaticPulseSpeed))
+		const chromAmount = v.chromaticAmount * chromPulse
 
 		// Draw image to offscreen 2D buffer (flipY corrects WebGL texture coords)
 		gfx.background(0)
@@ -153,22 +141,22 @@ const sketch = (p: p5) => {
 		p.shader(shd)
 		shd.setUniform('uTexture', gfx)
 		shd.setUniform('uTime', time)
-		shd.setUniform('uPrimaryFreq', CONFIG.primaryFreq)
-		shd.setUniform('uPrimarySpeed', CONFIG.primarySpeed)
-		shd.setUniform('uPrimaryAmplitude', CONFIG.primaryAmplitude)
-		shd.setUniform('uSecondaryFreq', CONFIG.secondaryFreq)
-		shd.setUniform('uSecondarySpeed', CONFIG.secondarySpeed)
-		shd.setUniform('uSecondaryAmplitude', CONFIG.secondaryAmplitude)
-		shd.setUniform('uVerticalPulseSpeed', CONFIG.verticalPulseSpeed)
-		shd.setUniform('uVerticalPulseFreq', CONFIG.verticalPulseFreq)
-		shd.setUniform('uVerticalPulseDepth', CONFIG.verticalPulseDepth)
+		shd.setUniform('uPrimaryFreq', v.primaryFreq)
+		shd.setUniform('uPrimarySpeed', loopSpeed(v.primaryCycles, v.loopDuration))
+		shd.setUniform('uPrimaryAmplitude', v.primaryAmplitude)
+		shd.setUniform('uSecondaryFreq', v.secondaryFreq)
+		shd.setUniform('uSecondarySpeed', loopSpeed(v.secondaryCycles, v.loopDuration))
+		shd.setUniform('uSecondaryAmplitude', v.secondaryAmplitude)
+		shd.setUniform('uVerticalPulseSpeed', loopSpeed(v.verticalPulseCycles, v.loopDuration))
+		shd.setUniform('uVerticalPulseFreq', v.verticalPulseFreq)
+		shd.setUniform('uVerticalPulseDepth', v.verticalPulseDepth)
 		shd.setUniform('uHueShift', hueShift)
 		shd.setUniform('uChromaticAmount', chromAmount)
 		p.rect(0, 0, p.width, p.height)
 
-		// Auto-stop recording after configured duration
+		// Auto-stop recording after exactly one loop
 		if (cap.recording && recordStartFrame >= 0) {
-			if (p.frameCount - recordStartFrame >= CONFIG.recordFrames) {
+			if (p.frameCount - recordStartFrame >= loopFrames) {
 				cap.stop()
 				recordStartFrame = -1
 			}
