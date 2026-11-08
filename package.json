@@ -9,7 +9,7 @@
 	],
 	"scripts": {
 		"dev": "yarn workspace @mytw/sketchbook dev",
-		"build": "tsc --noEmit && tsc -p packages/schema && yarn workspace @mytw/sketchbook build",
+		"build": "tsc --noEmit && tsc -p packages/schema && svelte-check --tsconfig ./packages/panel/tsconfig.json --fail-on-warnings && yarn workspace @mytw/sketchbook build",
 		"preview": "yarn workspace @mytw/sketchbook preview",
 		"new": "yarn workspace @mytw/sketchbook new",
 		"lint": "eslint .",
@@ -32,6 +32,8 @@
 		"jiti": "2.7.0",
 		"lint-staged": "16.2.7",
 		"prettier": "3.5.2",
+		"prettier-plugin-svelte": "3.5.2",
+		"svelte-check": "4.7.8",
 		"ts-jest": "29.4.15",
 		"ts-node": "10.9.2",
 		"typescript": "5.9.3",

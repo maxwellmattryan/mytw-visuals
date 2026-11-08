@@ -1,4 +1,5 @@
 import { resolve } from 'path'
+import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { globSync } from 'glob'
 import { defineConfig } from 'vite'
 import pkg from './package.json'
@@ -24,7 +25,7 @@ export default defineConfig({
 		},
 	},
 
-	plugins: [sketchListPlugin(), captureServerPlugin()],
+	plugins: [svelte(), sketchListPlugin(), captureServerPlugin()],
 
 	optimizeDeps: {
 		include: ['ccapture.js-npmfixed'],

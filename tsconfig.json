@@ -14,7 +14,8 @@
 		"paths": {
 			"@lib": ["./packages/lib/index.ts"],
 			"@lib/*": ["./packages/lib/*"],
-			"@mytw/schema": ["./packages/schema/index.ts"]
+			"@mytw/schema": ["./packages/schema/index.ts"],
+			"@mytw/panel": ["./packages/panel/index.ts"]
 		}
 	},
 	"ts-node": {
