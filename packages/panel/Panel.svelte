@@ -187,6 +187,12 @@
 		color: #ff6b6b;
 	}
 
+	.panel :global(.help) {
+		margin: 2px 0 0;
+		color: #999;
+		font-size: 11px;
+	}
+
 	.panel :global([aria-invalid='true']),
 	.panel :global(.highlighted input),
 	.panel :global(.highlighted select) {

@@ -26,6 +26,7 @@
 		return model.errors[key]
 	})
 	const pair: readonly number[] = $derived(Array.isArray(value) ? value : [0, 0])
+	const helpId = $derived(`${id}-help`)
 
 	// The vec2 component whose text was last rejected, so only that field shows the error.
 	let failed = $state<0 | 1>(0)
@@ -61,6 +62,7 @@
 		value={Number(value)}
 		{error}
 		{highlighted}
+		help={def.help}
 		onnumber={(n) => model.set(key, n)}
 		ontext={(text) => model.setText(key, text).ok}
 		onrevert={() => model.clearError(key)}
@@ -86,6 +88,7 @@
 		value={pair[1]}
 		error={failed === 1 ? error : undefined}
 		{highlighted}
+		help={def.help}
 		onnumber={(n) => setComponent(1, n)}
 		ontext={(text) => setComponentText(1, text)}
 		onrevert={() => model.clearError(key)}
@@ -97,6 +100,7 @@
 		value={String(value)}
 		{error}
 		{highlighted}
+		help={def.help}
 		onapply={(text) => model.set(key, text).ok}
 		onrevert={() => model.clearError(key)}
 		reset={resetButton}
@@ -109,12 +113,14 @@
 					{id}
 					type="checkbox"
 					checked={value === true}
+					aria-describedby={def.help !== undefined ? helpId : undefined}
 					onchange={(event) => model.set(key, event.currentTarget.checked)}
 				/>
 				{def.label}
 			</label>
 			{@render resetButton()}
 		</div>
+		{#if def.help !== undefined}<p id={helpId} class="help">{def.help}</p>{/if}
 	</div>
 {:else if def.kind === 'enum'}
 	<div class="row" class:highlighted>
@@ -123,11 +129,17 @@
 			{@render resetButton()}
 		</div>
 		<div class="controls">
-			<select {id} class="wide" onchange={(event) => model.set(key, event.currentTarget.value)}>
+			<select
+				{id}
+				class="wide"
+				aria-describedby={def.help !== undefined ? helpId : undefined}
+				onchange={(event) => model.set(key, event.currentTarget.value)}
+			>
 				{#each def.options as option (option)}
 					<option value={option} selected={option === value}>{option}</option>
 				{/each}
 			</select>
 		</div>
+		{#if def.help !== undefined}<p id={helpId} class="help">{def.help}</p>{/if}
 	</div>
 {/if}

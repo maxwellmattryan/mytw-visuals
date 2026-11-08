@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte'
-	import { roundNumber, sliderFor, stepValue } from './state'
+	import { describedBy, roundNumber, sliderFor, stepValue } from './state'
 	import type { RangedParam } from './state'
 
 	interface Props {
@@ -10,6 +10,8 @@
 		value: number
 		error: string | undefined
 		highlighted: boolean
+		/** Plain-text help shown under the control. */
+		help?: string
 		/** Applies a number from the slider or the arrow keys. */
 		onnumber: (value: number) => void
 		/** Applies typed text. Returns whether it was accepted. */
@@ -19,12 +21,27 @@
 		reset?: Snippet
 	}
 
-	let { id, label, def, value, error, highlighted, onnumber, ontext, onrevert, reset }: Props =
-		$props()
+	let {
+		id,
+		label,
+		def,
+		value,
+		error,
+		highlighted,
+		help,
+		onnumber,
+		ontext,
+		onrevert,
+		reset,
+	}: Props = $props()
 
 	const slider = $derived(sliderFor(def))
 	const errorId = $derived(`${id}-error`)
+	const helpId = $derived(`${id}-help`)
 	const labelId = $derived(`${id}-label`)
+	const describedIds = $derived(
+		describedBy(help !== undefined ? helpId : undefined, error !== undefined ? errorId : undefined)
+	)
 
 	// The user's text while it differs from the applied value, kept when it is rejected.
 	let draft = $state<string | null>(null)
@@ -83,12 +100,13 @@
 			spellcheck="false"
 			value={shown}
 			aria-invalid={error !== undefined ? 'true' : undefined}
-			aria-describedby={error !== undefined ? errorId : undefined}
+			aria-describedby={describedIds}
 			oninput={(event) => (draft = event.currentTarget.value)}
 			onblur={commit}
 			{onkeydown}
 		/>
 		{#if def.unit}<span class="unit">{def.unit}</span>{/if}
 	</div>
+	{#if help !== undefined}<p id={helpId} class="help">{help}</p>{/if}
 	{#if error !== undefined}<p id={errorId} class="error">{error}</p>{/if}
 </div>

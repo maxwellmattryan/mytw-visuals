@@ -5,6 +5,7 @@ import type { ParamDef } from '@mytw/schema'
 
 import {
 	createPanelState,
+	describedBy,
 	groupParams,
 	isToggleKey,
 	parseNumberInput,
@@ -279,6 +280,17 @@ describe('parseNumberInput', () => {
 		['NaN', null],
 	])('parses %p as %p', (text, expected) => {
 		expect(parseNumberInput(text)).toBe(expected)
+	})
+})
+
+describe('describedBy', () => {
+	it.each([
+		['help and error', ['a-help', 'a-error'], 'a-help a-error'],
+		['help only', ['a-help', undefined], 'a-help'],
+		['error only', [undefined, 'a-error'], 'a-error'],
+		['neither', [undefined, undefined], undefined],
+	])('joins the ids that exist: %s', (_name, ids, expected) => {
+		expect(describedBy(...ids)).toBe(expected)
 	})
 })
 
