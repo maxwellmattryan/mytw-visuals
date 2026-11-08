@@ -95,6 +95,8 @@ export class FakeGL implements EngineGL {
 	readonly draws: FakeDraw[] = []
 	readonly viewports: [number, number, number, number][] = []
 	readonly uniforms: FakeUniformCall[] = []
+	/** Set by `FakeCanvas.loseContext`, like a real context the moment it is lost. */
+	lost = false
 
 	private nextId = 1
 	private shaders = new Map<WebGLShader, { source: string; failed: boolean }>()
@@ -255,6 +257,10 @@ export class FakeGL implements EngineGL {
 		this.locations.set(location, { program, name })
 		return location
 	}
+	isContextLost(): boolean {
+		this.hit('isContextLost')
+		return this.lost
+	}
 	useProgram(program: WebGLProgram | null): void {
 		this.hit('useProgram')
 		this.program = program
@@ -404,8 +410,14 @@ export class FakeCanvas implements CanvasLike {
 		return n
 	}
 
-	/** Fires `webglcontextlost` and returns the event, whose `defaultPrevented` shows `preventDefault` was called. */
-	loseContext(): Event {
+	/**
+	 * Marks the context lost, then fires `webglcontextlost` (pass `false` to skip the
+	 * event, as a browser does until its event task runs). Returns the event, whose
+	 * `defaultPrevented` shows `preventDefault` was called.
+	 */
+	loseContext(fireEvent = true): Event | null {
+		this.gl.lost = true
+		if (!fireEvent) return null
 		return this.dispatch('webglcontextlost')
 	}
 

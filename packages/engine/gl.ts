@@ -39,6 +39,7 @@ export type EngineGL = Pick<
 	| 'getShaderInfoLog'
 	| 'getShaderParameter'
 	| 'getUniformLocation'
+	| 'isContextLost'
 	| 'linkProgram'
 	| 'pixelStorei'
 	| 'shaderSource'

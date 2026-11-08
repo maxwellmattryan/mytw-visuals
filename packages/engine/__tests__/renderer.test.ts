@@ -125,10 +125,15 @@ describe('renderer', () => {
 		const restored = jest.fn()
 		renderer.onRestored(restored)
 
-		const event = canvas.loseContext()
-		expect(event.defaultPrevented).toBe(true)
-		expect(renderer.contextLost).toBe(true)
+		// Before the browser fires the event, the driver already reports the loss.
+		canvas.loseContext(false)
 		const draws = gl.draws.length
+		expect(renderer.render(TWO_LAYERS)).toBe(false)
+		expect(gl.draws.length).toBe(draws)
+
+		const event = canvas.loseContext()
+		expect(event?.defaultPrevented).toBe(true)
+		expect(renderer.contextLost).toBe(true)
 		expect(renderer.render(TWO_LAYERS)).toBe(false)
 		expect(gl.draws.length).toBe(draws)
 

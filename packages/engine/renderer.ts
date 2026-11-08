@@ -590,7 +590,8 @@ export function createRendererFromContext(
 
 		render(frame) {
 			assertLive('render')
-			if (lost) return false
+			// The driver reports a loss at once; the event that sets `lost` comes later.
+			if (lost || gl.isContextLost()) return false
 			validate(frame)
 			const plan = planFrame(frame)
 			for (let slot = 0; slot < plan.buffers; slot++) pool.acquire(slot, width, height)
