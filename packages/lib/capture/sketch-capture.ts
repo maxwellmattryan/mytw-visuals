@@ -13,6 +13,11 @@ export interface CaptureOptions {
 	framerate?: number
 }
 
+export interface StartOptions {
+	/** Stop on its own after this many frames. Omit it to record until `stop()`. */
+	frameLimit?: number
+}
+
 export class SketchCapture {
 	canvas: HTMLCanvasElement
 	framerate: number
@@ -20,9 +25,11 @@ export class SketchCapture {
 	private _session: string | null
 	private _pending: number
 	private _total: number
+	private _frameLimit: number | null
 	private _buffer: HTMLCanvasElement | null
 	private _bufferCtx: CanvasRenderingContext2D | null
 	private _indicator: HTMLDivElement | null
+	private _flushing: Promise<void> | null
 
 	constructor(canvas: HTMLCanvasElement, options: CaptureOptions = {}) {
 		this.canvas = canvas
@@ -31,16 +38,39 @@ export class SketchCapture {
 		this._session = null
 		this._pending = 0
 		this._total = 0
+		this._frameLimit = null
 		this._buffer = null
 		this._bufferCtx = null
 		this._indicator = null
+		this._flushing = null
 	}
 
-	async start() {
+	/** Frames captured by the current recording, or by the last one until the next `start()`. */
+	get framesCaptured(): number {
+		return this._total
+	}
+
+	/** The current recording's frame limit, or `null` when it runs until `stop()`. */
+	get frameLimit(): number | null {
+		return this._frameLimit
+	}
+
+	/** Resolves once the last recording's frames are uploaded and its session is closed. */
+	flushed(): Promise<void> {
+		return this._flushing ?? Promise.resolve()
+	}
+
+	async start(options: StartOptions = {}) {
+		if (this.recording) return
+		// The previous session's flush still uses the shared session state, so let it finish first.
+		await this.flushed()
 		if (this.recording) return
 		this._session = localTimestamp()
 		this._pending = 0
 		this._total = 0
+		const limit = options.frameLimit
+		this._frameLimit =
+			limit !== undefined && Number.isFinite(limit) ? Math.max(1, Math.round(limit)) : null
 		this._buffer = document.createElement('canvas')
 		this._buffer.width = this.canvas.width
 		this._buffer.height = this.canvas.height
@@ -54,6 +84,7 @@ export class SketchCapture {
 		} catch (err) {
 			console.error('[capture] Failed to start session — is the dev server running?', err)
 			this._session = null
+			this._frameLimit = null
 			this._buffer = null
 			this._bufferCtx = null
 			return
@@ -87,14 +118,19 @@ export class SketchCapture {
 					this._pending--
 				})
 		}, 'image/png')
+		if (this._frameLimit !== null && this._total >= this._frameLimit) this.stop()
 	}
 
 	stop() {
 		if (!this.recording) return
 		this.recording = false
+		this._frameLimit = null
 		this._hideIndicator()
 		console.log('[capture] Recording stopped — flushing frames…')
-		this._finish()
+		const flushing = this._finish().finally(() => {
+			if (this._flushing === flushing) this._flushing = null
+		})
+		this._flushing = flushing
 	}
 
 	async _finish() {
@@ -117,7 +153,7 @@ export class SketchCapture {
 		}
 
 		this._session = null
-		this._total = 0
+		this._frameLimit = null
 		this._buffer = null
 		this._bufferCtx = null
 	}

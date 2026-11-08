@@ -4,8 +4,8 @@ import { compileFilterShader } from '@lib/shaders'
 import { createCapture } from '@lib/capture'
 import type { SketchCapture } from '@lib/capture'
 import { coverImage } from '@lib/image'
-import { loopValue } from '@lib/math'
-import { mountPanel } from '@mytw/panel'
+import { LOOP_TARGETS, LoopClock } from '@lib/loop'
+import { mountPanel, mountTransport } from '@mytw/panel'
 import type { Panel } from '@mytw/panel'
 import type { ParamValues } from '@mytw/schema'
 import { understorySchema } from './params'
@@ -305,7 +305,7 @@ const sketch = (p: p5) => {
 	let img: p5.Image
 	let gfx: p5.Graphics
 	let panel: Panel<typeof understorySchema.params>
-	let recordStartFrame = -1
+	let clock: LoopClock
 
 	p.preload = () => {
 		img = p.loadImage('/images/mytw-002_base.png')
@@ -332,27 +332,26 @@ const sketch = (p: p5) => {
 			cap.framerate = fps
 		}
 		applyFps(panel.values.fps)
+
+		// The clock owns the loop phase. The transport pauses, steps and scrubs it,
+		// and its Record loop button records exactly one loop from phase 0.
+		clock = new LoopClock({ loopFrames: panel.values.loopFrames, fps: panel.values.fps })
 		panel.onChange((v, key) => {
-			if (key === 'fps' || key === null) applyFps(v.fps)
+			if (key === 'fps' || key === null) {
+				applyFps(v.fps)
+				clock.setFps(v.fps)
+			}
+			if (key === 'loopFrames' || key === null) clock.setLoopFrames(v.loopFrames)
+		})
+		mountTransport(clock, cap, {
+			redraw: () => p.redraw(),
+			target: LOOP_TARGETS.spotifyCanvas,
 		})
 	}
 
 	p.draw = () => {
 		const v = panel.values
-
-		// Anchor the loop origin to the FIRST recorded frame, so the captured clip
-		// begins exactly at phase 0. (cap.bindKeys flips cap.recording on a frame
-		// that has already been drawn; anchoring here — not in keyPressed — keeps
-		// that phase-0 frame, which was previously lost, making clips one short.)
-		if (cap.recording) {
-			if (recordStartFrame < 0) recordStartFrame = p.frameCount
-		} else if (recordStartFrame >= 0) {
-			recordStartFrame = -1 // recording ended/cancelled — resume free-running preview
-		}
-
-		const origin = recordStartFrame >= 0 ? recordStartFrame : 0
-		const offset = p.frameCount - origin
-		const phase = loopValue(offset, v.loopFrames)
+		const phase = clock.next()
 
 		// Base travels +motion; the ghost travels WITH it (unison) a bit slower,
 		// unless ghostContrary flips it to oppose.
@@ -398,14 +397,6 @@ const sketch = (p: p5) => {
 		shd.setUniform('uHueShift', (v.hueShift * Math.PI) / 180)
 
 		p.rect(0, 0, p.width, p.height)
-
-		// Auto-stop after exactly one loop. Stop BEFORE capturing the wrap frame
-		// (offset == loopFrames is phase 0 again), keeping exactly loopFrames frames:
-		// offsets 0 .. loopFrames-1, i.e. phases 0 .. (loopFrames-1)/loopFrames.
-		if (cap.recording && offset >= v.loopFrames) {
-			cap.stop()
-			recordStartFrame = -1
-		}
 
 		cap.capture()
 	}

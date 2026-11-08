@@ -47,12 +47,12 @@ Sketches are created in `apps/sketchbook/sketches/NNN-name/` with auto-increment
 
 ## Keyboard Shortcuts
 
-| Key      | Action                       |
-| -------- | ---------------------------- |
-| Hold `R` | Record PNG frames (dev only) |
-| `S`      | Save screenshot (PNG)        |
-| `H`      | Hide or show the panel       |
-| `B`      | Swap A and B in a compare    |
+| Key      | Action                               |
+| -------- | ------------------------------------ |
+| Hold `R` | Record PNG frames (dev only)         |
+| `S`      | Save screenshot (PNG)                |
+| `H`      | Hide or show the panel and transport |
+| `B`      | Swap A and B in a compare            |
 
 `R` and `S` do nothing while you type in a text field, and neither do `H` and `B`. `B` only acts during a snapshot compare.
 
@@ -108,9 +108,33 @@ mountPanel(schema, {
 
 `storage` also accepts any object with `getItem` and `setItem`. If storage is unavailable or holds data the panel can't read, the panel starts from defaults. If a write fails, such as when storage is full, your values stay as they are. Either way the status line says so, and values and snapshots keep working in memory until reload.
 
+## Transport
+
+A looping sketch reads its phase from a `LoopClock` instead of `p.frameCount`, and mounts a transport to play, pause, step and scrub the loop:
+
+```ts
+import { LOOP_TARGETS, LoopClock } from '@lib/loop'
+import { mountTransport } from '@mytw/panel'
+
+const clock = new LoopClock({ loopFrames: 225, fps: 30 }) // in setup()
+mountTransport(clock, cap, { redraw: () => p.redraw(), target: LOOP_TARGETS.spotifyCanvas })
+p.draw = () => {
+	const phase = clock.next() // in [0, 1), once per draw()
+}
+```
+
+The transport floats at the bottom right, outside the canvas, so recordings and screenshots never include it. `H` hides and shows it along with the panel. It has:
+
+- **Play/Pause**, **Step back** and **Step forward** (each step pauses), and a **Loop phase** scrub that pauses and seeks. The readout shows the 0-based frame, such as `Frame 12 / 225`.
+- The loop length, such as `225 frames · 7.50 s at 30 fps`. Sketches 001 and 002 set it in the panel's Loop group.
+- **Target**: `None`, `Spotify Canvas (3–8 s)` or `Custom` with a max length in seconds. A warning shows when the loop is outside the target. Both bounds are inclusive.
+- **Record loop** records exactly one loop: it starts a session, jumps to frame 0 and stops by itself after `loopFrames` frames. Like hold-`R`, it needs `yarn dev`. Changing the loop length or FPS while it runs stops the recording.
+- **Check seam** draws the two frames on each side of the loop point and compares them. `Seam` is the mean RGB difference (0–255) between the last frame and the first, and `step` is the mean difference across the neighbouring steps. The loop is flagged as jumping when the seam is over twice the step and over 1. It then returns to the frame you were on.
+
 ## Export
 
 - **Video**: Hold `R` to record, release to stop. A red dot shows while recording. Each frame is POSTed as a PNG to the dev server, which writes it to `~/Downloads/mytw-captures/<session>/`. Convert a session to MP4 by hand with `yarn convert <dir>`; the console prints the exact command. Recording needs `yarn dev`, and there is no fallback download. The capture endpoints only accept same-origin requests with a timestamp session name.
+- **One loop**: In a sketch with a transport, **Record loop** records exactly `loopFrames` frames from phase 0, then stops by itself.
 - **Screenshot**: Press `S` to save a PNG of the current frame.
 
 ## TypeScript

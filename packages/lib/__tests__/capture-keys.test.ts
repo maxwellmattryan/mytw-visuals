@@ -57,6 +57,7 @@ describe('SketchCapture.bindKeys', () => {
 		keys.press('R')
 		keys.press('s')
 		expect(keys.start).toHaveBeenCalledTimes(1)
+		expect(keys.start).toHaveBeenCalledWith()
 		expect(keys.screenshot).toHaveBeenCalledTimes(1)
 	})
 
