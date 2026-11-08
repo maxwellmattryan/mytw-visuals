@@ -51,6 +51,24 @@ Sketches are created in `apps/sketchbook/sketches/NNN-name/` with auto-increment
 | -------- | ---------------------------- |
 | Hold `R` | Record PNG frames (dev only) |
 | `S`      | Save screenshot (PNG)        |
+| `H`      | Hide or show the panel       |
+
+`R` and `S` do nothing while you type in a text field, and neither does `H`.
+
+## Parameter Panel
+
+A sketch that defines its parameters with `@mytw/schema` gets a live control panel with one call. Read `panel.values` in `draw()`, and every change applies on the next frame:
+
+```ts
+import { mountPanel } from '@mytw/panel'
+
+const panel = mountPanel(schema) // usually in setup()
+p.draw = () => {
+	p.circle(0, 0, panel.values.size)
+}
+```
+
+The panel floats at the top left, outside the canvas, so recordings and screenshots never include it. Press `H` to hide it. `apps/sketchbook/sketches/003-panel-demo/` shows every control kind.
 
 ## Export
 
@@ -79,6 +97,7 @@ import { defineSchema, param } from '@mytw/schema'
 packages/
   lib/            shared modules (math, colors, shaders, layout, image, capture), each with an index.ts barrel
   schema/         parameter definitions, constraints, clamping and validation (@mytw/schema)
+  panel/          Svelte 5 control panel generated from a schema, mounted with mountPanel (@mytw/panel)
 apps/
   sketchbook/     the sketchbook app and Vite root
     index.html    sketch picker page, served at /

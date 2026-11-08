@@ -11,10 +11,13 @@
 	},
 	"dependencies": {
 		"@mytw/lib": "*",
+		"@mytw/panel": "*",
+		"@mytw/schema": "*",
 		"ccapture.js-npmfixed": "1.1.0",
 		"p5": "1.11.3"
 	},
 	"devDependencies": {
+		"@sveltejs/vite-plugin-svelte": "5.1.1",
 		"@types/p5": "1.7.7",
 		"glob": "11.0.1",
 		"vite": "6.1.0"
