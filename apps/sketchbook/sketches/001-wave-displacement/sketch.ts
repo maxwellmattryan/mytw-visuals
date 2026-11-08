@@ -106,8 +106,8 @@ const sketch = (p: p5) => {
 
 		// The clock owns the loop position. The transport pauses, steps and scrubs it,
 		// and its Record loop button records exactly one loop from the start.
-		const v = panel.values
-		clock = new LoopClock({ loopFrames: v.loopDuration * v.fps, fps: v.fps })
+		const initial = panel.values
+		clock = new LoopClock({ loopFrames: initial.loopDuration * initial.fps, fps: initial.fps })
 		panel.onChange((v, key) => {
 			if (key === 'fps' || key === null) {
 				applyFps(v.fps)

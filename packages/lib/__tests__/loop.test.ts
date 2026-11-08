@@ -106,6 +106,16 @@ describe('LoopClock', () => {
 		expect(clock.next()).toBe(0.5)
 	})
 
+	it('does nothing when setLoopFrames gets the current length', () => {
+		const clock = new LoopClock({ loopFrames: 10, fps: 30 })
+		const listener = jest.fn()
+		clock.onChange(listener)
+		expect(clock.next()).toBe(0)
+		clock.setLoopFrames(10)
+		expect(clock.next()).toBe(0.1)
+		expect(listener).not.toHaveBeenCalled()
+	})
+
 	it.each([
 		[99.6, 100],
 		[0, 1],

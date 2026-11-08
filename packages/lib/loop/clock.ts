@@ -104,6 +104,8 @@ export class LoopClock {
 	/** Changes the loop length and keeps the phase, so frame 100 of 200 becomes 50 of 100. */
 	setLoopFrames(n: number): void {
 		const frames = toFrameCount(n)
+		// The same length again (a panel reset or snapshot load) must not repeat a frame.
+		if (frames === this._loopFrames) return
 		this._frame = Math.round(this.phase * frames) % frames
 		this._loopFrames = frames
 		this._drawn = false
