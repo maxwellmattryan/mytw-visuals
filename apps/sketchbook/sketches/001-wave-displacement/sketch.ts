@@ -4,7 +4,8 @@ import { compileFilterShader } from '@lib/shaders'
 import { createCapture } from '@lib/capture'
 import type { SketchCapture } from '@lib/capture'
 import { coverImage } from '@lib/image'
-import { mountPanel } from '@mytw/panel'
+import { LoopClock } from '@lib/loop'
+import { mountPanel, mountTransport } from '@mytw/panel'
 import type { Panel } from '@mytw/panel'
 import { loopSpeed, waveDisplacementSchema } from './params'
 
@@ -81,7 +82,7 @@ const sketch = (p: p5) => {
 	let shd: p5.Shader
 	let img: p5.Image
 	let panel: Panel<typeof waveDisplacementSchema.params>
-	let recordStartFrame = -1
+	let clock: LoopClock
 
 	p.preload = () => {
 		img = p.loadImage('/images/mytw-001.png')
@@ -102,27 +103,29 @@ const sketch = (p: p5) => {
 			cap.framerate = fps
 		}
 		applyFps(panel.values.fps)
-		panel.onChange((v, key) => {
-			if (key === 'fps' || key === null) applyFps(v.fps)
-		})
 
-		// Wrap keyPressed to track recording start frame for auto-stop
-		const existingKeyPressed = p.keyPressed
-		p.keyPressed = () => {
-			if ((p.key === 'r' || p.key === 'R') && !cap.recording) {
-				recordStartFrame = p.frameCount
+		// The clock owns the loop position. The transport pauses, steps and scrubs it,
+		// and its Record loop button records exactly one loop from the start.
+		const v = panel.values
+		clock = new LoopClock({ loopFrames: v.loopDuration * v.fps, fps: v.fps })
+		panel.onChange((v, key) => {
+			if (key === 'fps' || key === null) {
+				applyFps(v.fps)
+				clock.setFps(v.fps)
 			}
-			existingKeyPressed()
-		}
+			if (key === 'loopDuration' || key === 'fps' || key === null) {
+				clock.setLoopFrames(v.loopDuration * v.fps)
+			}
+		})
+		mountTransport(clock, cap, { redraw: () => p.redraw() })
 	}
 
 	p.draw = () => {
 		const v = panel.values
 
 		// Looping time in seconds — wraps every loopDuration for a seamless loop.
-		// A recording is exactly one loop of these frames.
-		const loopFrames = v.loopDuration * v.fps
-		const time = (p.frameCount % loopFrames) / v.fps
+		clock.next()
+		const time = clock.frame / v.fps
 
 		// Hue shift drifts on its own slow cycle
 		const hueShift = Math.sin(time * loopSpeed(v.hueShiftCycles, v.loopDuration)) * v.hueShiftAmount
@@ -153,14 +156,6 @@ const sketch = (p: p5) => {
 		shd.setUniform('uHueShift', hueShift)
 		shd.setUniform('uChromaticAmount', chromAmount)
 		p.rect(0, 0, p.width, p.height)
-
-		// Auto-stop recording after exactly one loop
-		if (cap.recording && recordStartFrame >= 0) {
-			if (p.frameCount - recordStartFrame >= loopFrames) {
-				cap.stop()
-				recordStartFrame = -1
-			}
-		}
 
 		cap.capture()
 	}
