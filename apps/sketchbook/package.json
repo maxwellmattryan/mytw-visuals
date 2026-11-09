@@ -11,9 +11,11 @@
 	},
 	"dependencies": {
 		"@mytw/assets": "*",
+		"@mytw/document": "*",
 		"@mytw/engine": "*",
 		"@mytw/export": "*",
 		"@mytw/fx": "*",
+		"@mytw/layers": "*",
 		"@mytw/lib": "*",
 		"@mytw/panel": "*",
 		"@mytw/scene": "*",
