@@ -1,0 +1,135 @@
+{
+	"format": "mytw-project",
+	"schemaVersion": 1,
+	"name": "Understory",
+	"output": { "width": 1080, "height": 1920, "fps": 30, "background": "#000000" },
+	"timeline": { "mode": "loop", "frames": 225 },
+	"assets": {
+		"sha256:740b8530c50ed203aa2ecb3ef2ecd24e100b1fef711424f2c8033bb6b724384b": {
+			"kind": "image",
+			"mimeType": "image/png",
+			"width": 1688,
+			"height": 3000,
+			"name": "mytw-002_base.png"
+		}
+	},
+	"modulators": {
+		"drift-x": { "shape": "sine", "cycles": 1, "phase": 0 },
+		"drift-y": { "shape": "sine", "cycles": 1, "phase": 0.25 },
+		"breathe": { "shape": "sine", "cycles": 1, "phase": 0 },
+		"ghost-wobble": { "shape": "sine", "cycles": 1, "phase": 0 },
+		"aberration-pulse": { "shape": "sine", "cycles": 1, "phase": 0.75 }
+	},
+	"tracks": [
+		{
+			"id": "main",
+			"kind": "visual",
+			"clips": [
+				{
+					"id": "understory",
+					"start": 0,
+					"frames": 225,
+					"fadeIn": 0,
+					"fadeOut": 0,
+					"layers": [
+						{
+							"id": "base",
+							"name": "Base",
+							"kind": "image",
+							"asset": "sha256:740b8530c50ed203aa2ecb3ef2ecd24e100b1fef711424f2c8033bb6b724384b",
+							"visible": true,
+							"opacity": 1,
+							"blend": "normal",
+							"feather": 0.06,
+							"transform": {
+								"centerX": {
+									"value": 0.5,
+									"mod": [{ "modulator": "drift-x", "amount": 0.012, "mode": "add" }]
+								},
+								"centerY": {
+									"value": 0.72,
+									"mod": [{ "modulator": "drift-y", "amount": 0.012, "mode": "add" }]
+								},
+								"zoom": {
+									"value": 2,
+									"mod": [{ "modulator": "breathe", "amount": 0.022, "mode": "multiply" }]
+								},
+								"rotation": 0,
+								"mirrorX": false,
+								"mirrorY": false
+							},
+							"effects": []
+						},
+						{
+							"id": "ghost",
+							"name": "Ghost",
+							"kind": "image",
+							"asset": "sha256:740b8530c50ed203aa2ecb3ef2ecd24e100b1fef711424f2c8033bb6b724384b",
+							"visible": true,
+							"opacity": 1,
+							"blend": "multiply",
+							"feather": 0.06,
+							"transform": {
+								"centerX": {
+									"value": 0.2,
+									"mod": [{ "modulator": "drift-x", "amount": 0.0096, "mode": "add" }]
+								},
+								"centerY": {
+									"value": 0.25,
+									"mod": [{ "modulator": "drift-y", "amount": 0.0096, "mode": "add" }]
+								},
+								"zoom": {
+									"value": 3.4,
+									"mod": [{ "modulator": "breathe", "amount": 0.022, "mode": "multiply" }]
+								},
+								"rotation": {
+									"value": 0,
+									"mod": [{ "modulator": "ghost-wobble", "amount": 0.03, "mode": "add" }]
+								},
+								"mirrorX": true,
+								"mirrorY": false
+							},
+							"mask": { "kind": "linear-gradient", "from": [0.5, 0], "to": [0.5, 1] },
+							"effects": []
+						}
+					]
+				}
+			]
+		}
+	],
+	"effects": [
+		{
+			"id": "caustic",
+			"effect": "caustic-warp",
+			"version": 1,
+			"enabled": true,
+			"params": { "amount": 0.005, "scale": 2, "loopRadius": 0.8 }
+		},
+		{
+			"id": "vignette",
+			"effect": "vignette",
+			"version": 1,
+			"enabled": true,
+			"params": { "amount": 0.2 }
+		},
+		{
+			"id": "aberration",
+			"effect": "chromatic-aberration",
+			"version": 1,
+			"enabled": true,
+			"params": {
+				"amount": {
+					"value": 0.006,
+					"mod": [{ "modulator": "aberration-pulse", "amount": 0.005, "mode": "add" }]
+				}
+			}
+		},
+		{
+			"id": "hue",
+			"effect": "hue-shift",
+			"version": 1,
+			"enabled": true,
+			"params": { "degrees": -15 }
+		}
+	]
+}
