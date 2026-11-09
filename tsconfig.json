@@ -23,6 +23,7 @@
 			"@mytw/scene": ["./packages/scene/index.ts"],
 			"@mytw/sketch": ["./packages/sketch/index.ts"],
 			"@mytw/export": ["./packages/export/index.ts"],
+			"@mytw/layers": ["./packages/layers/index.ts"],
 			"@mytw/storage": ["./packages/storage/index.ts"],
 			"@mytw/home": ["./packages/home/index.ts"]
 		}
