@@ -160,6 +160,7 @@ packages/
   lib/            shared modules (math, colors, shaders, layout, image, capture), each with an index.ts barrel
   schema/         parameter definitions, constraints, clamping and validation (@mytw/schema)
   panel/          Svelte 5 control panel generated from a schema, mounted with mountPanel (@mytw/panel)
+  fx/             effects as data, built-in effects and the shared GLSL chunk library (@mytw/fx, see packages/fx/README.md)
 apps/
   sketchbook/     the sketchbook app and Vite root
     index.html    sketch picker page, served at /
