@@ -118,7 +118,7 @@ function checkClip(ctx: Context, clip: ProjectClip, path: string): void {
 	clip.layers.forEach((layer, index) => {
 		const at = indexPath(childPath(path, 'layers'), index)
 		checkId(ctx, layer.id, at)
-		if (!Object.hasOwn(ctx.project.assets, layer.asset))
+		if (layer.kind === 'image' && !Object.hasOwn(ctx.project.assets, layer.asset))
 			ctx.issues.push(
 				issue(childPath(at, 'asset'), 'reference', `no asset ${JSON.stringify(layer.asset)}`)
 			)
