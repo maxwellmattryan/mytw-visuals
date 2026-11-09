@@ -9,6 +9,7 @@ const config: Config = {
 		'^@lib$': '<rootDir>/packages/lib/index.ts',
 		'^@lib/(.*)$': '<rootDir>/packages/lib/$1',
 		'^@mytw/schema$': '<rootDir>/packages/schema/index.ts',
+		'^@mytw/fx$': '<rootDir>/packages/fx/index.ts',
 	},
 }
 

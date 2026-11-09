@@ -10,6 +10,7 @@
 		"new": "node scripts/new-sketch.ts"
 	},
 	"dependencies": {
+		"@mytw/fx": "*",
 		"@mytw/lib": "*",
 		"@mytw/panel": "*",
 		"@mytw/schema": "*",
