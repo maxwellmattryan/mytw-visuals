@@ -164,6 +164,12 @@ async function main(): Promise<void> {
 	let busy: AbortController | null = null
 	let videoOk = false
 	let check = 0
+	/** The status line: the last export's outcome, then the H.264 support message. */
+	const status = { export: '', support: '' }
+
+	function showStatus(): void {
+		ui.status.textContent = [...new Set([status.export, status.support])].filter(Boolean).join('\n')
+	}
 
 	function setBusy(controller: AbortController | null): void {
 		busy = controller
@@ -195,7 +201,8 @@ async function main(): Promise<void> {
 		const support = await checkVideoSupport(s)
 		if (id !== check) return
 		videoOk = support.ok
-		ui.status.textContent = support.ok ? '' : support.message
+		status.support = support.ok ? '' : support.message
+		showStatus()
 		setBusy(busy)
 	}
 
@@ -206,12 +213,14 @@ async function main(): Promise<void> {
 		try {
 			destination = await pickFile(name, kind)
 		} catch (err) {
-			ui.status.textContent = describeError(err)
+			status.export = describeError(err)
+			showStatus()
 			return
 		}
 		const controller = new AbortController()
 		setBusy(controller)
-		ui.status.textContent = ''
+		status.export = ''
+		showStatus()
 		const total = kind === 'png' ? 1 : s.frames
 		ui.progress.textContent = `${kind}: 0 / ${total}`
 		const started = performance.now()
@@ -255,8 +264,11 @@ async function main(): Promise<void> {
 				: `phase ${clock.phase.toFixed(3)}`
 			ui.progress.textContent = `${kind}: done in ${seconds} s (${detail}) → ${name}`
 		} catch (err) {
-			ui.status.textContent = describeError(err)
-			if (kind === 'png' && destination) await destination.abort().catch(() => {})
+			status.export = describeError(err)
+			showStatus()
+			// The exporters abort a destination they took; this covers early failures
+			// (invalid options, no encoder) and the still, so no partial file is kept.
+			if (destination) await destination.abort().catch(() => {})
 		} finally {
 			setBusy(null)
 			await refresh()
