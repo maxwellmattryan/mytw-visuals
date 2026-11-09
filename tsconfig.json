@@ -16,8 +16,8 @@
 			"@lib/*": ["./packages/lib/*"],
 			"@mytw/schema": ["./packages/schema/index.ts"],
 			"@mytw/document": ["./packages/document/index.ts"],
-			"@mytw/engine": ["./packages/engine/index.ts"],
-			"@mytw/panel": ["./packages/panel/index.ts"]
+			"@mytw/panel": ["./packages/panel/index.ts"],
+			"@mytw/engine": ["./packages/engine/index.ts"]
 		}
 	},
 	"ts-node": {
