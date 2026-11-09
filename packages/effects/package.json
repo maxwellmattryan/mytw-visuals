@@ -1,0 +1,18 @@
+{
+	"name": "@mytw/effects",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./index.ts"
+	},
+	"dependencies": {
+		"@mytw/document": "*",
+		"@mytw/engine": "*",
+		"@mytw/fx": "*",
+		"@mytw/layers": "*",
+		"@mytw/panel": "*",
+		"@mytw/schema": "*",
+		"svelte": "5.57.3"
+	}
+}

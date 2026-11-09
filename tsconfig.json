@@ -25,7 +25,8 @@
 			"@mytw/export": ["./packages/export/index.ts"],
 			"@mytw/layers": ["./packages/layers/index.ts"],
 			"@mytw/storage": ["./packages/storage/index.ts"],
-			"@mytw/home": ["./packages/home/index.ts"]
+			"@mytw/home": ["./packages/home/index.ts"],
+			"@mytw/effects": ["./packages/effects/index.ts"]
 		}
 	},
 	"ts-node": {
