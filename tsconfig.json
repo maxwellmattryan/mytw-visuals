@@ -22,7 +22,8 @@
 			"@mytw/engine": ["./packages/engine/index.ts"],
 			"@mytw/scene": ["./packages/scene/index.ts"],
 			"@mytw/sketch": ["./packages/sketch/index.ts"],
-			"@mytw/export": ["./packages/export/index.ts"]
+			"@mytw/export": ["./packages/export/index.ts"],
+			"@mytw/layers": ["./packages/layers/index.ts"]
 		}
 	},
 	"ts-node": {

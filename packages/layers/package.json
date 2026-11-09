@@ -1,0 +1,17 @@
+{
+	"name": "@mytw/layers",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./index.ts"
+	},
+	"dependencies": {
+		"@mytw/assets": "*",
+		"@mytw/document": "*",
+		"@mytw/engine": "*",
+		"@mytw/panel": "*",
+		"@mytw/schema": "*",
+		"svelte": "5.57.3"
+	}
+}
