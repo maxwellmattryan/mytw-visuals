@@ -15,11 +15,14 @@
 				{ "type": "json", "path": "packages/engine/package.json", "jsonpath": "$.version" },
 				{ "type": "json", "path": "packages/export/package.json", "jsonpath": "$.version" },
 				{ "type": "json", "path": "packages/fx/package.json", "jsonpath": "$.version" },
+				{ "type": "json", "path": "packages/layers/package.json", "jsonpath": "$.version" },
+				{ "type": "json", "path": "packages/home/package.json", "jsonpath": "$.version" },
 				{ "type": "json", "path": "packages/lib/package.json", "jsonpath": "$.version" },
 				{ "type": "json", "path": "packages/panel/package.json", "jsonpath": "$.version" },
 				{ "type": "json", "path": "packages/scene/package.json", "jsonpath": "$.version" },
 				{ "type": "json", "path": "packages/schema/package.json", "jsonpath": "$.version" },
-				{ "type": "json", "path": "packages/sketch/package.json", "jsonpath": "$.version" }
+				{ "type": "json", "path": "packages/sketch/package.json", "jsonpath": "$.version" },
+				{ "type": "json", "path": "packages/storage/package.json", "jsonpath": "$.version" }
 			]
 		}
 	}

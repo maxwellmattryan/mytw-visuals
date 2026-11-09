@@ -4,7 +4,7 @@ export { clampValues } from './clamp'
 export { validate } from './validate'
 export { PARAMS_FORMAT, PARAMS_FORMAT_VERSION, parseValues, serializeValues } from './snapshot'
 export type { ParseValuesResult } from './snapshot'
-export { PROJECT_FORMAT, PROJECT_SCHEMA_VERSION } from './project'
+export { ID_PATTERN, PROJECT_FORMAT, PROJECT_SCHEMA_VERSION } from './project'
 export type {
 	AnimatableNumber,
 	EffectInstance,
