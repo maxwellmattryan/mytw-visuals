@@ -8,6 +8,7 @@
 		".": {
 			"package-name": "mytw-visuals",
 			"extra-files": [
+				{ "type": "json", "path": "apps/editor/package.json", "jsonpath": "$.version" },
 				{ "type": "json", "path": "apps/sketchbook/package.json", "jsonpath": "$.version" },
 				{ "type": "json", "path": "packages/assets/package.json", "jsonpath": "$.version" },
 				{ "type": "json", "path": "packages/document/package.json", "jsonpath": "$.version" },

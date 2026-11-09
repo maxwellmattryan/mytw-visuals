@@ -35,6 +35,28 @@ yarn dev
 
 Open `http://localhost:5173` to see the sketch picker.
 
+## Editor
+
+The editor (`apps/editor`) is the start of the local visual editor. It opens a project, plays it, and routes every edit through the document store with undo and redo. There is no backend and no login.
+
+```sh
+yarn editor
+```
+
+It starts on an empty state. Open a fixture project from the header or the empty state, or straight from the URL with `?fixture=understory` or `?fixture=minimal`.
+
+For a static build, run `yarn workspace @mytw/editor build`. It writes `apps/editor/dist/` with relative URLs, so any static file server can host it at any path. `yarn editor:preview` serves it locally. Opening `dist/index.html` from disk (`file://`) doesn't work, because browsers block module scripts and `fetch` there.
+
+| Key                                | Action          |
+| ---------------------------------- | --------------- |
+| `Ctrl+Z` / `Cmd+Z`                 | Undo            |
+| `Ctrl+Shift+Z` / `Cmd+Shift+Z`     | Redo            |
+| `Ctrl+Y`                           | Redo            |
+| `Space`                            | Play or pause   |
+| Arrow keys on a focused panel edge | Resize by 16 px |
+
+The shortcuts do nothing while you type in a text field. `Space` keeps its native behaviour on buttons and selects.
+
 ## Create a New Sketch
 
 ```sh
@@ -253,6 +275,7 @@ packages/
   storage/        projects in IndexedDB, autosave and .mytw.zip bundles, no UI (@mytw/storage, see packages/storage/README.md)
   home/           Svelte 5 project list, mounted with mountProjectHome (@mytw/home)
 apps/
+  editor/         the local editor app: Svelte 5, plays projects with undo and redo (@mytw/editor)
   sketchbook/     the sketchbook app and Vite root
     index.html    sketch picker page, served at /
     picker/       sketch picker script loaded by index.html
@@ -280,7 +303,7 @@ yarn format
 yarn build
 ```
 
-Type-checks, then produces `apps/sketchbook/dist/` with all sketch entry points.
+Type-checks, then produces `apps/sketchbook/dist/` with all sketch entry points and `apps/editor/dist/` with the editor.
 
 ## Versioning and Releases
 

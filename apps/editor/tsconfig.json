@@ -1,0 +1,25 @@
+{
+	"compilerOptions": {
+		"strict": true,
+		"noEmit": true,
+		"isolatedModules": true,
+		"verbatimModuleSyntax": true,
+		"skipLibCheck": true,
+		"resolveJsonModule": true,
+		"target": "ESNext",
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"lib": ["ES2023", "DOM", "DOM.Iterable"],
+		"types": [],
+		"paths": {
+			"@lib/*": ["../../packages/lib/*"],
+			"@mytw/assets": ["../../packages/assets/index.ts"],
+			"@mytw/document": ["../../packages/document/index.ts"],
+			"@mytw/engine": ["../../packages/engine/index.ts"],
+			"@mytw/fx": ["../../packages/fx/index.ts"],
+			"@mytw/scene": ["../../packages/scene/index.ts"],
+			"@mytw/schema": ["../../packages/schema/index.ts"]
+		}
+	},
+	"include": ["src/**/*.ts", "src/**/*.svelte"]
+}
