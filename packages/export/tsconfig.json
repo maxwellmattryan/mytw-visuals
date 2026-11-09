@@ -1,0 +1,18 @@
+{
+	"compilerOptions": {
+		"strict": true,
+		"noEmit": true,
+		"isolatedModules": true,
+		"skipLibCheck": true,
+		"target": "ESNext",
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"lib": ["ES2023", "DOM"],
+		"types": [],
+		"paths": {
+			"@lib/*": ["../lib/*"],
+			"@mytw/engine": ["../engine/index.ts"]
+		}
+	},
+	"include": ["*.ts", "testing/*.ts"]
+}
