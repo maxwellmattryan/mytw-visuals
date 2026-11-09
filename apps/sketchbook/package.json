@@ -22,6 +22,7 @@
 		"@mytw/scene": "*",
 		"@mytw/schema": "*",
 		"@mytw/sketch": "*",
+		"@mytw/stage": "*",
 		"@mytw/storage": "*",
 		"ccapture.js-npmfixed": "1.1.0",
 		"p5": "1.11.3"
