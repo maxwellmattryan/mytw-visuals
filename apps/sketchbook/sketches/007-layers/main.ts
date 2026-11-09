@@ -2,7 +2,10 @@ import { isTypingTarget } from '@lib/capture'
 import { MemoryAssetSource } from '@mytw/assets'
 import { createDocumentStore } from '@mytw/document'
 import type { DocumentValidation } from '@mytw/document'
+import { applyEffectPreview, buildCustomEffect, mountEffects } from '@mytw/effects'
 import { createRenderer } from '@mytw/engine'
+import type { EffectProgram } from '@mytw/engine'
+import { assembleFragment, EFFECTS } from '@mytw/fx'
 import { applySolo, mountLayers } from '@mytw/layers'
 import { parseProject, validateProject } from '@mytw/schema'
 import type { Project } from '@mytw/schema'
@@ -10,8 +13,9 @@ import { compileScene } from '@mytw/scene'
 import type { Scene } from '@mytw/scene'
 import fixture from '../../../../packages/schema/fixtures/v1/understory.json'
 
-// The layers panel's host and manual test page: layers on the left, a live engine preview in the
-// centre, properties on the right. Every edit goes through one document store, so Mod+Z undoes it.
+// The layers and effects panels' host and manual test page: layers and effects on the left, a live
+// engine preview in the centre, layer and effect properties on the right. Every edit goes through
+// one document store, so Mod+Z undoes it.
 
 const FIXTURE_IMAGE = '/images/mytw-002_base.png'
 
@@ -59,19 +63,44 @@ async function main() {
 	})
 	if (controller.layers.length > 0) controller.select(controller.layers.at(-1)?.id ?? null)
 
+	// The effects panels edit the layer the layers panel selects.
+	const effects = mountEffects({
+		store,
+		stackTarget: element('effects', HTMLDivElement),
+		propertiesTarget: element('effect-properties', HTMLDivElement),
+	})
+	effects.controller.setLayer(controller.selectedId)
+	controller.subscribe(() => effects.controller.setLayer(controller.selectedId))
+
 	const { output } = store.document
 	const renderer = createRenderer(canvas, { width: output.width, height: output.height })
 	// Hashes whose upload has started, and those the renderer holds.
 	const uploaded = new Set<string>()
 	const ready = new Set<string>()
-	const registered = new Set<string>()
+	// The fragment each effect id was registered with, so an edited custom effect re-registers.
+	const registered = new Map<string, string>()
 	let scene: Scene | null = null
 	let sceneError = ''
 	let renderError = ''
+	let effectError = ''
 
 	const showMessage = () => {
-		message.textContent = sceneError || renderError
+		message.textContent = sceneError || effectError || renderError
 	}
+
+	const register = (program: EffectProgram) => {
+		if (registered.get(program.id) === program.fragment) return
+		registered.set(program.id, program.fragment)
+		try {
+			renderer.registerEffect(program)
+		} catch (error) {
+			effectError = `${program.id}: ${error instanceof Error ? error.message : String(error)}`
+		}
+	}
+
+	// Every bank effect up front, so a hover preview of one the project doesn't use yet renders.
+	for (const definition of EFFECTS)
+		register({ id: definition.id, fragment: assembleFragment(definition).source })
 
 	const upload = async (hash: string) => {
 		const bytes = await assets.read(hash.slice('sha256:'.length))
@@ -80,8 +109,15 @@ async function main() {
 		ready.add(hash)
 	}
 
-	/** Recompiles the scene, then uploads new images and registers new effects. */
+	/** Recompiles the scene, then uploads new images and registers new or changed effects. */
 	const sync = () => {
+		effectError = ''
+		// Custom effects register as soon as they exist, so hovering one in the browser previews it.
+		for (const entry of store.document.customEffects ?? []) {
+			const built = buildCustomEffect(entry)
+			if (built.ok)
+				register({ id: built.effect.id, fragment: assembleFragment(built.effect).source })
+		}
 		try {
 			scene = compileScene(store.document)
 			sceneError = ''
@@ -99,18 +135,15 @@ async function main() {
 					showMessage()
 				})
 			}
-			for (const effect of scene.effects) {
-				if (registered.has(effect.id)) continue
-				registered.add(effect.id)
-				renderer.registerEffect(effect)
-			}
+			for (const effect of scene.effects) register(effect)
 		}
 		showMessage()
 	}
 	store.subscribe(sync)
 	sync()
 
-	// Plays the loop in real time. Solo applies to the preview only.
+	// Plays the loop in real time. Solo and the effect browser's hover preview apply to the preview
+	// only, never to the document.
 	const started = performance.now()
 	const loop = (now: number) => {
 		if (scene) {
@@ -124,7 +157,12 @@ async function main() {
 						ready.has(layer.image) ? layer : { ...layer, visible: false }
 					),
 				}
-				renderer.render(applySolo(loaded, controller.solo))
+				const previewed = applyEffectPreview(
+					loaded,
+					effects.controller.preview,
+					frame / scene.frames
+				)
+				renderer.render(applySolo(previewed, controller.solo))
 				if (renderError) {
 					renderError = ''
 					showMessage()

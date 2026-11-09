@@ -22,14 +22,24 @@
 			.editor {
 				box-sizing: border-box;
 				display: grid;
-				grid-template-columns: 260px minmax(0, 1fr) 300px;
+				grid-template-columns: 280px minmax(0, 1fr) 320px;
 				gap: 12px;
 				height: 100%;
 				padding: 12px;
 			}
 
+			/* Each side column stacks two panels, and each panel scrolls on its own. */
+			.column {
+				display: grid;
+				grid-template-rows: minmax(0, 2fr) minmax(0, 3fr);
+				gap: 12px;
+				min-height: 0;
+			}
+
 			#layers,
-			#properties {
+			#effects,
+			#properties,
+			#effect-properties {
 				min-height: 0;
 			}
 
@@ -67,12 +77,18 @@
 	</head>
 	<body>
 		<main class="editor">
-			<div id="layers"></div>
+			<div class="column">
+				<div id="layers"></div>
+				<div id="effects"></div>
+			</div>
 			<div class="stage" id="stage">
 				<canvas id="canvas" aria-label="Preview"></canvas>
 				<p class="stage-message" id="stage-message" role="status"></p>
 			</div>
-			<div id="properties"></div>
+			<div class="column">
+				<div id="properties"></div>
+				<div id="effect-properties"></div>
+			</div>
 		</main>
 		<script type="module" src="./main.ts"></script>
 	</body>

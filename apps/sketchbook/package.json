@@ -12,6 +12,7 @@
 	"dependencies": {
 		"@mytw/assets": "*",
 		"@mytw/document": "*",
+		"@mytw/effects": "*",
 		"@mytw/engine": "*",
 		"@mytw/export": "*",
 		"@mytw/fx": "*",
