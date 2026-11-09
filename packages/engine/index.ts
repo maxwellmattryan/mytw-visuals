@@ -22,3 +22,8 @@ export type {
 	UniformValue,
 	Vec2,
 } from './types'
+export * from './timeline/types'
+export { compileTimeline, TimelineError } from './timeline/compile'
+export type { Timeline } from './timeline/compile'
+export { evaluate } from './timeline/evaluate'
+export { loopIssues } from './timeline/loop'

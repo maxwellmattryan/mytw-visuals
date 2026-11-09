@@ -43,7 +43,8 @@ export default [
 				'error',
 				{
 					paths: ['p5', 'svelte', '@mytw/panel', '@lib'],
-					patterns: ['svelte/*', '@lib/*'],
+					// @lib/math is pure, so the timeline may use it.
+					patterns: ['svelte/*', '@lib/*', '!@lib/math'],
 				},
 			],
 		},

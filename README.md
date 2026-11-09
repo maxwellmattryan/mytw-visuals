@@ -131,6 +131,18 @@ The transport floats at the bottom right, outside the canvas, so recordings and 
 - **Record loop** records exactly one loop: it starts a session, jumps to frame 0 and stops by itself after `loopFrames` frames. Like hold-`R`, it needs `yarn dev`. Changing the loop length or FPS while it runs stops the recording.
 - **Check seam** draws the two frames on each side of the loop point and compares them. `Seam` is the mean RGB difference (0–255) between the last frame and the first, and `step` is the mean difference across the neighbouring steps. The loop is flagged as jumping when the seam is over twice the step and over 1. It then returns to the frame you were on.
 
+## Timeline
+
+`@mytw/engine` resolves a timeline document at a loop phase. A document has flat params (such as `base.zoom`), each with a base value or keyframe track, and shared sine, triangle or noise modulators that add to any number of params with their own amounts. Modulators run whole cycles per loop and results are clamped to each param's bounds. Evaluation is pure and needs no DOM, so previews and exports agree frame for frame, and phase 1 equals phase 0 when `loopIssues` finds nothing:
+
+```ts
+import { evaluate, loopIssues } from '@mytw/engine'
+
+// doc: { params: { 'base.zoom': { kind: 'number', value: 1 } }, modulators: { breathe: … } }
+const state = evaluate(doc, clock.phase) // { 'base.zoom': 1.02 }
+const loopSafe = loopIssues(doc).length === 0 // every keyframe track ends where it starts
+```
+
 ## Export
 
 - **Video**: Hold `R` to record, release to stop. A red dot shows while recording. Each frame is POSTed as a PNG to the dev server, which writes it to `~/Downloads/mytw-captures/<session>/`. Convert a session to MP4 by hand with `yarn convert <dir>`; the console prints the exact command. Recording needs `yarn dev`, and there is no fallback download. The capture endpoints only accept same-origin requests with a timestamp session name.
@@ -198,6 +210,7 @@ packages/
   panel/          Svelte 5 control panel generated from a schema, mounted with mountPanel (@mytw/panel)
   engine/         UI-free WebGL2 renderer: frame data, render graph, effects (@mytw/engine)
   document/       document store: JSON commands, undo and redo, change notifications (@mytw/document)
+  engine/         timeline and modulation evaluator, no DOM (@mytw/engine)
 apps/
   sketchbook/     the sketchbook app and Vite root
     index.html    sketch picker page, served at /
