@@ -371,7 +371,7 @@ The Understory proof (#19) renders the p5 original and this fixture side by side
 
 **Threshold.** At each of the frames 0, 45, 90, 135, 180 and 224, the mean absolute difference over R, G and B must be at most 2 (on 0–255). At most 1% of pixels may have a channel that differs by more than 16. Alpha is ignored. The threshold is fixed, so don't loosen it to make a frame pass.
 
-**Results** (headless Chrome on Apple silicon, after the corrections below):
+**Results** (the `[understory-compare]` console report from `?run`, headless Chrome on Apple silicon, after the corrections below):
 
 | Frame | Phase  | Mean abs | Max | Over 16 | Result |
 | ----- | ------ | -------- | --- | ------- | ------ |
