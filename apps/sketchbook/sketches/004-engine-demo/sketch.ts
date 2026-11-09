@@ -1,6 +1,14 @@
 import { createRenderer } from '@mytw/engine'
-import type { BlendMode, LayerTransform, Mask, RenderFrame, Renderer } from '@mytw/engine'
+import type { BlendMode, Mask, Renderer } from '@mytw/engine'
 import { LoopClock } from '@lib/loop'
+
+import {
+	registerUnderstoryEffects,
+	UNDERSTORY_IMAGE,
+	UNDERSTORY_IMAGE_ID,
+	UNDERSTORY_MASK,
+	understoryFrame,
+} from './understory-frame'
 
 // ---------------------------------------------------------------------------
 // Engine demo: Understory's base x mirrored ghost, drawn by @mytw/engine with
@@ -8,97 +16,18 @@ import { LoopClock } from '@lib/loop'
 // effect on the ghost, L loses the WebGL context and restores it 1 s later.
 // Add ?offscreen to render into an OffscreenCanvas.
 //
-// The vignette, hue shift and tint shaders below are throwaway demo effects.
+// The frames and demo effects live in understory-frame.ts.
 // ---------------------------------------------------------------------------
 
 const WIDTH = 1080
 const HEIGHT = 1920
-const TAU = Math.PI * 2
-
-const VIGNETTE = `#version 300 es
-precision highp float;
-in vec2 vUv;
-uniform sampler2D uInput;
-uniform vec2 uResolution;
-uniform float uAmount;
-out vec4 outColor;
-void main() {
-	vec4 c = texture(uInput, vUv);
-	float d = distance(vUv, vec2(0.5));
-	outColor = vec4(c.rgb * mix(1.0, 1.0 - smoothstep(0.35, 0.95, d), uAmount), c.a);
-}
-`
-
-const HUE_SHIFT = `#version 300 es
-precision highp float;
-in vec2 vUv;
-uniform sampler2D uInput;
-uniform float uAngle;
-out vec4 outColor;
-void main() {
-	vec4 c = texture(uInput, vUv);
-	vec3 k = vec3(0.57735);
-	float co = cos(uAngle);
-	vec3 rgb = c.rgb * co + cross(k, c.rgb) * sin(uAngle) + k * dot(k, c.rgb) * (1.0 - co);
-	outColor = vec4(clamp(rgb, 0.0, c.a), c.a);
-}
-`
-
-const TINT = `#version 300 es
-precision highp float;
-in vec2 vUv;
-uniform sampler2D uInput;
-uniform vec3 uTint;
-uniform float uAmount;
-out vec4 outColor;
-void main() {
-	vec4 c = texture(uInput, vUv);
-	float l = dot(c.rgb, vec3(0.2126, 0.7152, 0.0722));
-	outColor = vec4(mix(c.rgb, uTint * l, uAmount), c.a);
-}
-`
-
 const BLENDS: BlendMode[] = ['multiply', 'screen', 'add', 'normal']
-const MASKS: (Mask | undefined)[] = [
-	{ kind: 'linear', from: [0.5, 0], to: [0.5, 1] },
+const MASKS: (Mask | null)[] = [
+	UNDERSTORY_MASK,
 	{ kind: 'radial', center: [0.5, 0.45], inner: 0.1, outer: 0.55 },
-	{ kind: 'image', image: 'base', channel: 'luminance' },
-	undefined,
+	{ kind: 'image', image: UNDERSTORY_IMAGE_ID, channel: 'luminance' },
+	null,
 ]
-
-// Understory's defaults (apps/sketchbook/sketches/002-understory/params.ts).
-const U = {
-	driftAmp: 0.012,
-	ghostScale: 0.8,
-	breatheAmp: 0.022,
-	ghostWobbleAmp: 0.03,
-	feather: 0.06,
-	vignette: 0.2,
-	hueShift: -15,
-}
-
-/**
- * Understory's layer framing as an engine transform. Understory drifts in
- * source UV after the zoom, so the drift becomes an output-UV offset scaled by
- * the zoom, with the sign flipped on mirrored axes.
- */
-function framing(
-	phase: number,
-	opts: { zoom: number; center: [number, number]; mirrorX: boolean; factor: number; angle: number }
-): LayerTransform {
-	const a = phase * TAU
-	const scale = 1 + U.breatheAmp * Math.sin(a)
-	const zoom = opts.zoom * scale
-	const ox = opts.factor * U.driftAmp * Math.sin(a)
-	const oy = opts.factor * U.driftAmp * Math.cos(a)
-	return {
-		center: opts.center,
-		offset: [(opts.mirrorX ? 1 : -1) * ox * zoom, -oy * zoom],
-		zoom,
-		rotation: opts.angle,
-		mirrorX: opts.mirrorX,
-	}
-}
 
 interface Target {
 	mode: 'HTMLCanvasElement' | 'OffscreenCanvas'
@@ -138,15 +67,13 @@ async function main(): Promise<void> {
 	document.body.appendChild(visible)
 
 	const image = new Image()
-	image.src = '/images/mytw-002_base.png'
+	image.src = UNDERSTORY_IMAGE
 	await image.decode()
 
 	const target = createTarget(visible, new URLSearchParams(location.search).has('offscreen'))
 	const { renderer } = target
-	renderer.setImage('base', image)
-	renderer.registerEffect({ id: 'vignette', fragment: VIGNETTE })
-	renderer.registerEffect({ id: 'hue', fragment: HUE_SHIFT })
-	renderer.registerEffect({ id: 'tint', fragment: TINT })
+	renderer.setImage(UNDERSTORY_IMAGE_ID, image)
+	registerUnderstoryEffects(renderer)
 
 	const clock = new LoopClock({ loopFrames: 225, fps: 30 })
 	let blend = 0
@@ -169,53 +96,6 @@ async function main(): Promise<void> {
 	const renderTimes: number[] = []
 	const start = performance.now()
 
-	function frameAt(phase: number): RenderFrame {
-		const a = phase * TAU
-		const ghostAngle = U.ghostWobbleAmp * Math.sin(a)
-		return {
-			background: [0, 0, 0, 1],
-			layers: [
-				{
-					id: 'base',
-					image: 'base',
-					transform: framing(phase, {
-						zoom: 2,
-						center: [0.5, 0.72],
-						mirrorX: false,
-						factor: 1,
-						angle: 0,
-					}),
-					edgeFeather: U.feather,
-				},
-				{
-					id: 'ghost',
-					image: 'base',
-					transform: framing(phase, {
-						zoom: 3.4,
-						center: [0.2, 0.25],
-						mirrorX: true,
-						factor: U.ghostScale,
-						angle: ghostAngle,
-					}),
-					edgeFeather: U.feather,
-					blend: BLENDS[blend],
-					mask: MASKS[mask],
-					effects: [
-						{
-							effect: 'tint',
-							enabled: tint,
-							uniforms: { uTint: [0.35, 0.75, 1], uAmount: 0.8 },
-						},
-					],
-				},
-			],
-			effects: [
-				{ effect: 'vignette', uniforms: { uAmount: U.vignette } },
-				{ effect: 'hue', uniforms: { uAngle: (U.hueShift * Math.PI) / 180 } },
-			],
-		}
-	}
-
 	function average(values: number[]): number {
 		return values.reduce((sum, v) => sum + v, 0) / Math.max(1, values.length)
 	}
@@ -224,7 +104,11 @@ async function main(): Promise<void> {
 		// Schedule first, so one failed frame does not stop the loop.
 		requestAnimationFrame(tick)
 		clock.seek(Math.floor(((now - start) / 1000) * clock.fps))
-		const frame = frameAt(clock.next())
+		const frame = understoryFrame(clock.next(), {
+			blend: BLENDS[blend],
+			mask: MASKS[mask],
+			tint,
+		})
 
 		const t0 = performance.now()
 		const drawn = renderer.render(frame)

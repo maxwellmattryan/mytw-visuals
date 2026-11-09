@@ -12,11 +12,13 @@
 	"dependencies": {
 		"@mytw/assets": "*",
 		"@mytw/engine": "*",
+		"@mytw/export": "*",
 		"@mytw/fx": "*",
 		"@mytw/lib": "*",
 		"@mytw/panel": "*",
 		"@mytw/scene": "*",
 		"@mytw/schema": "*",
+		"@mytw/sketch": "*",
 		"ccapture.js-npmfixed": "1.1.0",
 		"p5": "1.11.3"
 	},

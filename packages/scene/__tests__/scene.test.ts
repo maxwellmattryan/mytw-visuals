@@ -13,7 +13,7 @@ import type {
 	Modulator,
 	Project,
 	ProjectClip,
-	ProjectLayer,
+	ProjectImageLayer,
 } from '@mytw/schema'
 import { compileScene, SceneError } from '@mytw/scene'
 
@@ -32,7 +32,7 @@ function loadUnderstory(): Project {
 	return result.project
 }
 
-function testLayer(overrides: Partial<ProjectLayer> = {}): ProjectLayer {
+function testLayer(overrides: Partial<ProjectImageLayer> = {}): ProjectImageLayer {
 	return {
 		id: 'layer',
 		kind: 'image',
@@ -69,7 +69,7 @@ function testClip(overrides: Partial<ProjectClip> = {}): ProjectClip {
 function testProject(overrides: Partial<Project> = {}): Project {
 	return {
 		format: 'mytw-project',
-		schemaVersion: 1,
+		schemaVersion: 2,
 		name: 'Test',
 		output: { width: 1080, height: 1920, fps: 30, background: '#336699' },
 		timeline: { mode: 'loop', frames: 100 },

@@ -1,4 +1,4 @@
-// Project document format v1. See docs/project-format.md. Every document type is inferred from
+// Project document format v2. See docs/project-format.md. Every document type is inferred from
 // the codecs below, so the validator and the types describe one format.
 import {
 	animatableNumber,
@@ -18,15 +18,16 @@ import {
 	tuple2,
 } from './codec'
 import { COLOR_PATTERN } from './rules'
+import { PARAMS_FORMAT, PARAMS_FORMAT_VERSION } from './snapshot'
 
 export type { ProjectIssue, ProjectIssueCode } from './codec'
 
 export const PROJECT_FORMAT = 'mytw-project'
-export const PROJECT_SCHEMA_VERSION = 1
+export const PROJECT_SCHEMA_VERSION = 2
 
 export const ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/
 export const CONTENT_HASH_PATTERN = /^sha256:[0-9a-f]{64}$/
-const EFFECT_NAME_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/
+const NAME_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/
 const PARAM_KEY_PATTERN = /^[A-Za-z][A-Za-z0-9]*$/
 const FILE_NAME_PATTERN = /^[^/\\]*$/
 
@@ -139,7 +140,7 @@ const effectInstanceCodec = object(
 	{
 		id,
 		effect: string({
-			pattern: EFFECT_NAME_PATTERN,
+			pattern: NAME_PATTERN,
 			description: 'an effect name (lowercase letters and digits, joined by -)',
 		}),
 		version: integer({ min: 1 }),
@@ -171,23 +172,67 @@ const maskCodec = tagged('kind', {
 	}),
 })
 
+type SketchParamValue = number | boolean | string | [number, number]
+
+const finite = number()
+
+/** A sketch param value. Unlike effect params, sketch params are not animatable. */
+const sketchValueCodec: Codec<SketchParamValue> = {
+	check: (value, path, issues): value is SketchParamValue => {
+		if (typeof value === 'boolean' || typeof value === 'string') return true
+		if (typeof value === 'number') return finite.check(value, path, issues)
+		if (Array.isArray(value)) return vec2.check(value, path, issues)
+		issues.push(issue(path, 'type', 'expected a number, boolean, string or [number, number]'))
+		return false
+	},
+}
+
+/** The parameter envelope from `serializeValues`, embedded as is. */
+const sketchParamsCodec = object({
+	format: literal(PARAMS_FORMAT),
+	version: literal(PARAMS_FORMAT_VERSION),
+	values: record(
+		PARAM_KEY_PATTERN,
+		'a param name (a letter, then letters or digits)',
+		sketchValueCodec
+	),
+})
+
+// Fields every layer kind shares. Each kind adds its source: an image asset or a sketch.
+const layerFields = {
+	id,
+	visible: boolean(),
+	opacity: animatable({ min: 0, max: 1 }),
+	blend: oneOf(['normal', 'multiply', 'screen', 'add']),
+	feather: number({ min: 0, max: 0.5 }),
+	transform: transformCodec,
+	effects: array(effectInstanceCodec),
+}
+
+const optionalLayerFields = {
+	name: string({ min: 1, max: 200 }),
+	mask: maskCodec,
+}
+
 const layerCodec = tagged('kind', {
 	image: object(
+		{ ...layerFields, kind: literal('image'), asset: contentHash },
+		optionalLayerFields,
+		{ extensions: true }
+	),
+	sketch: object(
 		{
-			id,
-			kind: literal('image'),
-			asset: contentHash,
-			visible: boolean(),
-			opacity: animatable({ min: 0, max: 1 }),
-			blend: oneOf(['normal', 'multiply', 'screen', 'add']),
-			feather: number({ min: 0, max: 0.5 }),
-			transform: transformCodec,
-			effects: array(effectInstanceCodec),
+			...layerFields,
+			kind: literal('sketch'),
+			sketch: string({
+				pattern: NAME_PATTERN,
+				description: 'a sketch id (lowercase letters and digits, joined by -)',
+			}),
+			version: integer({ min: 1 }),
+			seed: integer(),
+			params: sketchParamsCodec,
 		},
-		{
-			name: string({ min: 1, max: 200 }),
-			mask: maskCodec,
-		},
+		optionalLayerFields,
 		{ extensions: true }
 	),
 })
@@ -240,6 +285,8 @@ export type ProjectAsset = Infer<typeof assetCodec>
 export type ProjectTrack = Infer<typeof trackCodec>
 export type ProjectClip = Infer<typeof clipCodec>
 export type ProjectLayer = Infer<typeof layerCodec>
+export type ProjectImageLayer = Extract<ProjectLayer, { kind: 'image' }>
+export type ProjectSketchLayer = Extract<ProjectLayer, { kind: 'sketch' }>
 export type LayerTransform = Infer<typeof transformCodec>
 export type LayerMask = Infer<typeof maskCodec>
 export type AnimatableNumber = Infer<typeof animatableCodec>

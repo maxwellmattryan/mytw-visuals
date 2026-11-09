@@ -1,28 +1,28 @@
-# Project format (v1)
+# Project format (v2)
 
 A project is one versioned JSON document that describes a looping visual: its output size, its timeline, the images it uses, the modulators that animate it, its tracks of clips and layers, and its effect chains. The document is independent of the code that renders it. Commands, the evaluator, the render graph, asset storage and the effect bank all read and write this one format.
 
-This page specifies format v1. `@mytw/schema` (`packages/schema/`) implements it:
+This page specifies format v2. `@mytw/schema` (`packages/schema/`) implements it:
 
-| Export                       | What it does                                                                                                                                                                                                                                                |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PROJECT_FORMAT`             | `"mytw-project"`                                                                                                                                                                                                                                            |
-| `PROJECT_SCHEMA_VERSION`     | `1`, the latest version this code reads                                                                                                                                                                                                                     |
-| `parseProject(input)`        | Reads JSON text or a parsed value: checks the envelope, migrates, validates, and returns a copy that shares no object with the input. Never throws.                                                                                                         |
-| `validateProject(doc)`       | Validates a document at the current version, without migrating. Returns the same reference on success.                                                                                                                                                      |
-| `serializeProject(project)`  | `JSON.stringify(project, null, '\t')`                                                                                                                                                                                                                       |
-| `migrateProject(doc, opts?)` | Runs the migration steps from the document's version up to the latest. Never throws, never mutates its input.                                                                                                                                               |
-| `MIGRATIONS`                 | The ordered migration steps. Empty in v1.                                                                                                                                                                                                                   |
-| Types                        | `Project`, `ProjectAsset`, `ProjectTrack`, `ProjectClip`, `ProjectLayer`, `LayerTransform`, `LayerMask`, `AnimatableNumber`, `ModBinding`, `Modulator`, `EffectInstance`, `ProjectIssue`, `ProjectIssueCode`, `ParseProjectResult`, `ValidateProjectResult` |
+| Export                       | What it does                                                                                                                                                                                                                                                                                           |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `PROJECT_FORMAT`             | `"mytw-project"`                                                                                                                                                                                                                                                                                       |
+| `PROJECT_SCHEMA_VERSION`     | `2`, the latest version this code reads                                                                                                                                                                                                                                                                |
+| `parseProject(input)`        | Reads JSON text or a parsed value: checks the envelope, migrates, validates, and returns a copy that shares no object with the input. Never throws.                                                                                                                                                    |
+| `validateProject(doc)`       | Validates a document at the current version, without migrating. Returns the same reference on success.                                                                                                                                                                                                 |
+| `serializeProject(project)`  | `JSON.stringify(project, null, '\t')`                                                                                                                                                                                                                                                                  |
+| `migrateProject(doc, opts?)` | Runs the migration steps from the document's version up to the latest. Never throws, never mutates its input.                                                                                                                                                                                          |
+| `MIGRATIONS`                 | The ordered migration steps: one step, v1 → v2.                                                                                                                                                                                                                                                        |
+| Types                        | `Project`, `ProjectAsset`, `ProjectTrack`, `ProjectClip`, `ProjectLayer`, `ProjectImageLayer`, `ProjectSketchLayer`, `LayerTransform`, `LayerMask`, `AnimatableNumber`, `ModBinding`, `Modulator`, `EffectInstance`, `ProjectIssue`, `ProjectIssueCode`, `ParseProjectResult`, `ValidateProjectResult` |
 
 The types are inferred from the validator's codecs (`packages/schema/project.ts`), so the checks and the types can't drift. The validator has no dependencies.
 
-Example documents live in `packages/schema/fixtures/v1/`: `minimal.json` is the smallest valid project, and `understory.json` expresses sketch 002 (see [Understory](#understory)).
+Example documents live in `packages/schema/fixtures/`. In `v1/`, `minimal.json` is the smallest valid project and `understory.json` expresses sketch 002 (see [Understory](#understory)). They stay at v1 and open through the migration. `v2/sketch-layer.json` draws a sketch layer over an image layer.
 
 ```json
 {
 	"format": "mytw-project",
-	"schemaVersion": 1,
+	"schemaVersion": 2,
 	"name": "Minimal",
 	"output": { "width": 1080, "height": 1080, "fps": 30, "background": "#000000" },
 	"timeline": { "mode": "loop", "frames": 60 },
@@ -47,7 +47,7 @@ Example documents live in `packages/schema/fixtures/v1/`: `minimal.json` is the 
 | Field           | Type                               | Rule                                                                          | Neutral |
 | --------------- | ---------------------------------- | ----------------------------------------------------------------------------- | ------- |
 | `format`        | `"mytw-project"`                   | literal                                                                       |         |
-| `schemaVersion` | integer                            | `1` for this version. See [Versions](#versions).                              |         |
+| `schemaVersion` | integer                            | `2` for this version. See [Versions](#versions).                              |         |
 | `name`          | string                             | 1 to 200 characters. Display only.                                            |         |
 | `output`        | [Output](#output)                  |                                                                               |         |
 | `timeline`      | [Timeline](#timeline)              |                                                                               |         |
@@ -79,7 +79,7 @@ Assets are content-addressed. The key of each entry in `assets` is `sha256:` fol
 
 | Field        | Type                                            | Rule                                    | Meaning                    |
 | ------------ | ----------------------------------------------- | --------------------------------------- | -------------------------- |
-| `kind`       | `"image"`                                       | the only kind in v1                     |                            |
+| `kind`       | `"image"`                                       | the only kind in v2                     |                            |
 | `mimeType`   | `"image/png"`, `"image/jpeg"` or `"image/webp"` |                                         | how to decode the bytes    |
 | `width`      | integer                                         | at least 1                              | intrinsic width in pixels  |
 | `height`     | integer                                         | at least 1                              | intrinsic height in pixels |
@@ -107,7 +107,7 @@ A modulator with `cycles: 0` is constant. Modulators that nothing binds are allo
 | Field        | Type                    | Rule                                               |
 | ------------ | ----------------------- | -------------------------------------------------- |
 | `id`         | id                      |                                                    |
-| `kind`       | `"visual"`              | the only kind in v1                                |
+| `kind`       | `"visual"`              | the only kind in v2                                |
 | `clips`      | [Clip](#clips)`[]`      | may be empty. Clips in one track must not overlap. |
 | `extensions` | optional record of JSON |                                                    |
 
@@ -125,14 +125,14 @@ A modulator with `cycles: 0` is constant. Modulators that nothing binds are allo
 
 ## Layers
 
-v1 has one layer kind, `"image"`, which draws an asset.
+A layer has one of two kinds: `"image"` draws an asset, and `"sketch"` draws a code sketch (see [Sketch layers](#sketch-layers)). Both kinds share every field below except their source: an image layer has `asset`, and a sketch layer has `sketch`, `version`, `seed` and `params` instead.
 
 | Field        | Type                                            | Rule                                                | Neutral                |
 | ------------ | ----------------------------------------------- | --------------------------------------------------- | ---------------------- |
 | `id`         | id                                              |                                                     |                        |
 | `name`       | optional string                                 | 1 to 200 characters. Display only.                  | absent                 |
-| `kind`       | `"image"`                                       |                                                     |                        |
-| `asset`      | content hash                                    | a key of `assets`                                   |                        |
+| `kind`       | `"image"` or `"sketch"`                         |                                                     |                        |
+| `asset`      | content hash                                    | image layers only. A key of `assets`.               |                        |
 | `visible`    | boolean                                         | `false` skips the layer entirely                    | `true`                 |
 | `opacity`    | AnimatableNumber                                | value in `[0, 1]`                                   | `1`                    |
 | `blend`      | `"normal"`, `"multiply"`, `"screen"` or `"add"` | see [Blends](#blends)                               | `"normal"`             |
@@ -141,6 +141,19 @@ v1 has one layer kind, `"image"`, which draws an asset.
 | `mask`       | optional [Mask](#mask)                          |                                                     | absent (fully visible) |
 | `effects`    | [EffectInstance](#effects)`[]`                  | the layer's own chain, applied before it is blended | `[]`                   |
 | `extensions` | optional record of JSON                         |                                                     |                        |
+
+### Sketch layer fields
+
+A sketch layer replaces `asset` with these fields:
+
+| Field     | Type    | Rule                                                                                                                                                                                                                                                                                            |
+| --------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sketch`  | string  | a sketch id, `^[a-z0-9]+(-[a-z0-9]+)*$`                                                                                                                                                                                                                                                         |
+| `version` | integer | at least 1, the version of the sketch's parameter schema                                                                                                                                                                                                                                        |
+| `seed`    | integer | the seed passed to p5's `randomSeed` and `noiseSeed`                                                                                                                                                                                                                                            |
+| `params`  | object  | the parameter values envelope as is: `{ "format": "mytw-params", "version": 1, "values": { … } }`, from `packages/schema/snapshot.ts`. `values` is a record with keys matching `^[A-Za-z][A-Za-z0-9]*$`, each a finite number, boolean, string or `[number, number]`. Values aren't animatable. |
+
+Like effect params, `params` is checked only structurally. The host checks it against the sketch's own schema when it loads the sketch, through `parseValues`, and recording `version` leaves room to migrate it later.
 
 ### Transform
 
@@ -157,7 +170,7 @@ v1 has one layer kind, `"image"`, which draws an asset.
 
 | Field  | Type                | Rule                                                |
 | ------ | ------------------- | --------------------------------------------------- |
-| `kind` | `"linear-gradient"` | the only kind in v1                                 |
+| `kind` | `"linear-gradient"` | the only kind in v2                                 |
 | `from` | `[x, y]`            | finite numbers, in canvas UV                        |
 | `to`   | `[x, y]`            | finite numbers, in canvas UV, different from `from` |
 
@@ -180,7 +193,7 @@ An **EffectInstance** is one step in an effect chain, either the global chain (`
 | `params`     | record                  | keys match `^[A-Za-z][A-Za-z0-9]*$`. Each value is an AnimatableNumber, a boolean, a string or a `[number, number]` pair. |
 | `extensions` | optional record of JSON |                                                                                                                           |
 
-v1 checks only this structure. Checking `params` against the named effect's own schema, and migrating between effect versions, belongs to the effect registry (#16).
+v2 checks only this structure. Checking `params` against the named effect's own schema, and migrating between effect versions, belongs to the effect registry (#16).
 
 ## Semantics
 
@@ -226,6 +239,10 @@ The exact mapping, for a canvas of `W × H` pixels and a source of `w × h` pixe
 - Let `R(θ) = [[cos θ, sin θ], [−sin θ, cos θ]]`, which with y down samples the source so that the image appears turned clockwise by `θ`.
 - Then `sourcePx = R(rotation)·(M·p) / (zoom·s)` and `sourceUv = center + sourcePx / (w, h)`, dividing component by component.
 
+### Sketch layers
+
+The host's sketch runtime (`@mytw/sketch`, see `packages/sketch/README.md`) renders a sketch layer into its own canvas at output size, so the neutral transform shows it 1:1. Pixels the sketch doesn't paint are transparent, so the layer composites with alpha like an image with transparency. The runtime seeds p5 with `seed` and clears the canvas before every frame, so a sketch layer is deterministic: the same sketch, params, `seed` and frame give the same pixels. Edges, masks, opacity, blends and effects then apply as for an image layer.
+
 ### Layer edges
 
 Outside the source bounds (`sourceUv` outside `[0, 1]²`) the layer is transparent. Inside them, `feather` softens the edge: with `(u, v)` the source UV and `f = feather`, the layer's alpha is the product of one ramp per edge, `smoothstep(0, f, u)·smoothstep(0, f, 1 − u)·smoothstep(0, f, v)·smoothstep(0, f, 1 − v)`. Near a corner two ramps multiply, so the corner is slightly softer than either edge. The engine and the Understory sketch both use this product. A `feather` of 0 is a hard edge.
@@ -257,7 +274,7 @@ These run only when the structure is valid. Each rule reports its own issue code
 
 | Code        | Rule                                                                                                                                                                                                   |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `reference` | Every layer `asset` is a key of `assets`, and every binding's `modulator` is a key of `modulators`.                                                                                                    |
+| `reference` | Every image layer `asset` is a key of `assets`, and every binding's `modulator` is a key of `modulators`.                                                                                              |
 | `duplicate` | Ids are unique across all tracks, clips, layers and effects (layer and global) in the document.                                                                                                        |
 | `timeline`  | A clip satisfies `start + frames <= timeline.frames` and `fadeIn + fadeOut <= frames`. Clips in one track don't overlap. Clips that touch, where one starts on the frame after another ends, are fine. |
 | `order`     | Keyframe `at` values are strictly increasing.                                                                                                                                                          |
@@ -286,7 +303,7 @@ Keys are always kept as own data, never followed: a `"__proto__"` key in `extens
 | --------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------- |
 | `json`          | The input text is not JSON.                                                        | `Not valid JSON`                                               |
 | `format`        | Not a `mytw-project` document, or `schemaVersion` is not an integer of at least 1. | `"mytw-params" is not mytw-project`                            |
-| `newer-version` | `schemaVersion` is higher than this code reads.                                    | `saved by a newer version (v2), this app reads up to v1`       |
+| `newer-version` | `schemaVersion` is higher than this code reads.                                    | `saved by a newer version (v3), this app reads up to v2`       |
 | `migration`     | A migration step is missing, threw, or returned the wrong `schemaVersion`.         | `no migration from v2 to v3`                                   |
 | `missing`       | A required field is absent.                                                        | `is missing`                                                   |
 | `unknown`       | A field the format doesn't define.                                                 | `is not a known field`                                         |
@@ -321,12 +338,12 @@ To change the format from v`n` to v`n + 1`:
 
 ## Reserved for later
 
-These arrive with a version bump and a migration. v1 rejects each one, as an unknown field or an unknown option:
+These arrive with a version bump and a migration. v2 rejects each one, as an unknown field or an unknown option:
 
 - an `"audio"` track kind (#32)
 - a top-level `formats` key, for per-format framing and parameter overrides (#31)
 - a top-level `publish` key
-- `"sketch"` and `"video"` layer kinds (#17, #27). A sketch layer will embed the parameter values envelope (`{ "format": "mytw-params", "version": 1, "values": { … } }`, from `packages/schema/snapshot.ts`) as is.
+- a `"video"` layer kind (#27)
 
 ## Understory
 
@@ -411,4 +428,5 @@ The overall verdict is pass. A full loop (225 frames at 30 fps), recorded side b
 
 ## Changelog
 
+- **v2**: adds the `"sketch"` layer kind (see [Sketch layers](#sketch-layers)), and the `reference` rule for `asset` now applies to image layers only. The migration from v1 changes only `schemaVersion`, since every v1 document is a valid v2 document.
 - **v1**: the first version of the format.

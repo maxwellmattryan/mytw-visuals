@@ -17,7 +17,7 @@ import type {
 	Modulator,
 	Project,
 	ProjectClip,
-	ProjectLayer,
+	ProjectImageLayer,
 } from '@mytw/schema'
 
 /** The radius of the circle a noise modulator samples, in noise space. */
@@ -62,7 +62,7 @@ interface CompiledEffect {
 }
 
 interface CompiledLayer {
-	readonly source: ProjectLayer
+	readonly source: ProjectImageLayer
 	readonly centerX: NumberFn
 	readonly centerY: NumberFn
 	readonly zoom: NumberFn
@@ -135,6 +135,8 @@ export function compileScene(project: Project): Scene {
 				source: clip,
 				layers: clip.layers.map((layer, l) => {
 					const at = `${clipPath}.layers[${l}]`
+					if (layer.kind !== 'image')
+						throw new SceneError(`${at}.kind`, `${layer.kind} layers are not rendered by the scene`)
 					const tf = layer.transform
 					return {
 						source: layer,

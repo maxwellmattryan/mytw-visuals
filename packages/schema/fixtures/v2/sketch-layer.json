@@ -1,0 +1,93 @@
+{
+	"format": "mytw-project",
+	"schemaVersion": 2,
+	"name": "Sketch layer",
+	"output": { "width": 1080, "height": 1920, "fps": 30, "background": "#000000" },
+	"timeline": { "mode": "loop", "frames": 225 },
+	"assets": {
+		"sha256:0000000000000000000000000000000000000000000000000000000000000000": {
+			"kind": "image",
+			"mimeType": "image/png",
+			"width": 1080,
+			"height": 1920,
+			"name": "base.png"
+		}
+	},
+	"modulators": {},
+	"tracks": [
+		{
+			"id": "main",
+			"kind": "visual",
+			"clips": [
+				{
+					"id": "loop",
+					"start": 0,
+					"frames": 225,
+					"fadeIn": 0,
+					"fadeOut": 0,
+					"layers": [
+						{
+							"id": "base",
+							"kind": "image",
+							"asset": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+							"visible": true,
+							"opacity": 1,
+							"blend": "normal",
+							"feather": 0,
+							"transform": {
+								"centerX": 0.5,
+								"centerY": 0.5,
+								"zoom": 1,
+								"rotation": 0,
+								"mirrorX": false,
+								"mirrorY": false
+							},
+							"effects": []
+						},
+						{
+							"id": "orbits",
+							"name": "Orbits",
+							"kind": "sketch",
+							"sketch": "basic-orbits",
+							"version": 1,
+							"seed": 7,
+							"params": {
+								"format": "mytw-params",
+								"version": 1,
+								"values": {
+									"background": "#000000",
+									"showBackground": false,
+									"count": 12,
+									"size": 0.04,
+									"cycles": 1
+								}
+							},
+							"visible": true,
+							"opacity": 1,
+							"blend": "screen",
+							"feather": 0,
+							"transform": {
+								"centerX": 0.5,
+								"centerY": 0.5,
+								"zoom": 1,
+								"rotation": 0,
+								"mirrorX": false,
+								"mirrorY": false
+							},
+							"effects": [
+								{
+									"id": "hue",
+									"effect": "hue-shift",
+									"version": 1,
+									"enabled": true,
+									"params": { "amount": 0.25 }
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"effects": []
+}

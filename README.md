@@ -143,7 +143,25 @@ const state = evaluate(doc, clock.phase) // { 'base.zoom': 1.02 }
 const loopSafe = loopIssues(doc).length === 0 // every keyframe track ends where it starts
 ```
 
+## Sketch Layers
+
+`@mytw/sketch` turns a p5 sketch into a layer the engine composites like an image, with blends, masks and effects. The engine supplies the frame (`t`, `frame`, `fps`) and the runtime seeds `p.random` and `p.noise` before every draw, so the same frame always gives the same pixels. p5 loads only when a project has a sketch layer:
+
+```ts
+import { loadSketchRuntime } from '@mytw/sketch'
+
+const runtime = await loadSketchRuntime()
+const sketch = await runtime.createSketchLayer(orbits, { width: 1080, height: 1920, seed: 7 })
+renderer.setImage('orbits', sketch.render({ frame, frames: 225, fps: 30 }))
+```
+
+See [packages/sketch/README.md](packages/sketch/README.md) for the determinism rules, and `apps/sketchbook/sketches/006-sketch-layer/` for a demo.
+
 ## Export
+
+Engine content exports in the browser with [`@mytw/export`](packages/export/README.md): an H.264 MP4, a PNG sequence as a zip, or a PNG still, stepped frame by frame and with no dev server or ffmpeg. Open `/sketches/006-export-check/` to try it from `yarn build && yarn preview`.
+
+p5 sketches still record through the dev server. That capture route stays for p5 in development, as explained in [the capture route decision](packages/export/README.md#the-capture-route):
 
 - **Video**: Hold `R` to record, release to stop. A red dot shows while recording. Each frame is POSTed as a PNG to the dev server, which writes it to `~/Downloads/mytw-captures/<session>/`. Convert a session to MP4 by hand with `yarn convert <dir>`; the console prints the exact command. Recording needs `yarn dev`, and there is no fallback download. The capture endpoints only accept same-origin requests with a timestamp session name.
 - **One loop**: In a sketch with a transport, **Record loop** records exactly `loopFrames` frames from phase 0, then stops by itself.
@@ -151,7 +169,7 @@ const loopSafe = loopIssues(doc).length === 0 // every keyframe track ends where
 
 ## Project Format
 
-A project is a versioned JSON document (`"format": "mytw-project"`) that describes a looping visual as data: output size, timeline, content-addressed image assets, modulators, tracks of clips and layers, and effect chains. `@mytw/scene` maps a project onto engine frames (see [packages/scene/README.md](packages/scene/README.md)), and `/sketches/006-understory-compare/` renders the Understory fixture through the engine next to the p5 original. `@mytw/schema` reads, validates, migrates and writes it with `parseProject`, `validateProject`, `migrateProject` and `serializeProject`. See [docs/project-format.md](docs/project-format.md) for the full v1 specification, including how to add a version. Example documents live in `packages/schema/fixtures/`. To run the comparison, start `yarn dev` and open `/sketches/006-understory-compare/` (add `?run` for a console report, or use **Record side by side**); see [Comparison](docs/project-format.md#comparison).
+A project is a versioned JSON document (`"format": "mytw-project"`) that describes a looping visual as data: output size, timeline, content-addressed image assets, modulators, tracks of clips and image or sketch layers, and effect chains. `@mytw/scene` maps a project onto engine frames (see [packages/scene/README.md](packages/scene/README.md)), and `/sketches/006-understory-compare/` renders the Understory fixture through the engine next to the p5 original. `@mytw/schema` reads, validates, migrates and writes it with `parseProject`, `validateProject`, `migrateProject` and `serializeProject`. See [docs/project-format.md](docs/project-format.md) for the full v2 specification, including how to add a version. Example documents live in `packages/schema/fixtures/`. To run the comparison, start `yarn dev` and open `/sketches/006-understory-compare/` (add `?run` for a console report, or use **Record side by side**); see [Comparison](docs/project-format.md#comparison).
 
 ## TypeScript
 
@@ -218,7 +236,9 @@ packages/
   assets/         image loading by content hash into WebGL2 textures, no UI or p5 (@mytw/assets)
   engine/         UI-free WebGL2 renderer, timeline and modulation evaluator: frame data, render graph, effects (@mytw/engine)
   scene/          project document → engine frames, pure (@mytw/scene, see packages/scene/README.md)
+  sketch/         p5 sketches as deterministic engine layers, p5 loaded on demand (@mytw/sketch, see packages/sketch/README.md)
   document/       document store: JSON commands, undo and redo, change notifications (@mytw/document)
+  export/         frame-accurate MP4, PNG sequence and still export in the browser (@mytw/export, see packages/export/README.md)
 apps/
   sketchbook/     the sketchbook app and Vite root
     index.html    sketch picker page, served at /
