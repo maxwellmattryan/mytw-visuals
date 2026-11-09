@@ -15,7 +15,8 @@
 				{ "type": "json", "path": "packages/fx/package.json", "jsonpath": "$.version" },
 				{ "type": "json", "path": "packages/lib/package.json", "jsonpath": "$.version" },
 				{ "type": "json", "path": "packages/panel/package.json", "jsonpath": "$.version" },
-				{ "type": "json", "path": "packages/schema/package.json", "jsonpath": "$.version" }
+				{ "type": "json", "path": "packages/schema/package.json", "jsonpath": "$.version" },
+				{ "type": "json", "path": "packages/sketch/package.json", "jsonpath": "$.version" }
 			]
 		}
 	}

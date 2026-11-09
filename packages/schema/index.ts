@@ -16,8 +16,10 @@ export type {
 	ProjectAsset,
 	ProjectClip,
 	ProjectIssue,
+	ProjectImageLayer,
 	ProjectIssueCode,
 	ProjectLayer,
+	ProjectSketchLayer,
 	ProjectTrack,
 } from './project'
 export { parseProject, serializeProject, validateProject } from './project-io'

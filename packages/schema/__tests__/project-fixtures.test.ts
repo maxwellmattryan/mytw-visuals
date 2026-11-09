@@ -17,8 +17,10 @@ const fixtureFiles = readdirSync(FIXTURES)
 	)
 
 describe('project fixtures', () => {
-	it('include the v1 fixtures', () => {
-		expect(fixtureFiles).toEqual(expect.arrayContaining(['v1/understory.json', 'v1/minimal.json']))
+	it('include the v1 and v2 fixtures', () => {
+		expect(fixtureFiles).toEqual(
+			expect.arrayContaining(['v1/understory.json', 'v1/minimal.json', 'v2/sketch-layer.json'])
+		)
 	})
 
 	it('every fixture parses through the full pipeline', () => {

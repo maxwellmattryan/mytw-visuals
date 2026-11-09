@@ -13,6 +13,7 @@ const config: Config = {
 		'^@mytw/fx$': '<rootDir>/packages/fx/index.ts',
 		'^@mytw/engine$': '<rootDir>/packages/engine/index.ts',
 		'^@mytw/document$': '<rootDir>/packages/document/index.ts',
+		'^@mytw/sketch$': '<rootDir>/packages/sketch/index.ts',
 	},
 }
 

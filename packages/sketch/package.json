@@ -1,0 +1,16 @@
+{
+	"name": "@mytw/sketch",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./index.ts"
+	},
+	"dependencies": {
+		"@mytw/schema": "*",
+		"p5": "1.11.3"
+	},
+	"devDependencies": {
+		"@types/p5": "1.7.7"
+	}
+}
