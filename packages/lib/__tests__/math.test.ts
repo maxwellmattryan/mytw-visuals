@@ -15,6 +15,7 @@ import {
 	sinN,
 	cosN,
 	fbm,
+	valueNoise2,
 } from '@lib/math'
 
 // ── Easing helpers ──────────────────────────────────────────────────
@@ -213,5 +214,47 @@ describe('fbm', () => {
 		// amplitudes: 0.5, 0.25, 0.125 → sum = 0.875
 		const result = fbm(mock, 0, 0, 3)
 		expect(result).toBeCloseTo(0.875)
+	})
+})
+
+// ── valueNoise2 ─────────────────────────────────────────────────────
+
+describe('valueNoise2', () => {
+	const points: [number, number][] = []
+	for (let i = 0; i < 400; i++) points.push([i * 0.37 - 50, i * 0.91 - 120])
+
+	it('is deterministic for the same input and seed', () => {
+		for (const [x, y] of points) {
+			expect(valueNoise2(x, y, 7)).toBe(valueNoise2(x, y, 7))
+		}
+	})
+
+	it('returns values in [0, 1)', () => {
+		for (const [x, y] of points) {
+			const v = valueNoise2(x, y)
+			expect(v).toBeGreaterThanOrEqual(0)
+			expect(v).toBeLessThan(1)
+		}
+	})
+
+	it('changes with seed', () => {
+		const differing = points.filter(([x, y]) => valueNoise2(x, y, 1) !== valueNoise2(x, y, 2))
+		expect(differing.length).toBeGreaterThan(points.length * 0.9)
+	})
+
+	it('defaults seed to 0', () => {
+		expect(valueNoise2(1.3, 2.7)).toBe(valueNoise2(1.3, 2.7, 0))
+	})
+
+	it('is continuous across lattice cell boundaries', () => {
+		expect(valueNoise2(3 - 1e-9, 0.5)).toBeCloseTo(valueNoise2(3, 0.5), 6)
+		expect(valueNoise2(0.5, -1e-12)).toBeCloseTo(valueNoise2(0.5, 0), 9)
+	})
+
+	it('does not call Math.random', () => {
+		const spy = jest.spyOn(Math, 'random')
+		valueNoise2(0.5, 0.5, 3)
+		expect(spy).not.toHaveBeenCalled()
+		spy.mockRestore()
 	})
 })

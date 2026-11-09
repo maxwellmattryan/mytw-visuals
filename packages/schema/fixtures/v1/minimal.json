@@ -1,0 +1,11 @@
+{
+	"format": "mytw-project",
+	"schemaVersion": 1,
+	"name": "Minimal",
+	"output": { "width": 1080, "height": 1080, "fps": 30, "background": "#000000" },
+	"timeline": { "mode": "loop", "frames": 60 },
+	"assets": {},
+	"modulators": {},
+	"tracks": [],
+	"effects": []
+}
