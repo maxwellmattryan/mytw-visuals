@@ -214,6 +214,7 @@ packages/
   lib/            shared modules (math, colors, shaders, layout, image, capture), each with an index.ts barrel
   schema/         parameter definitions, constraints, clamping and validation, and the project format (@mytw/schema)
   panel/          Svelte 5 control panel generated from a schema, mounted with mountPanel (@mytw/panel)
+  fx/             effects as data, built-in effects and the shared GLSL chunk library (@mytw/fx, see packages/fx/README.md)
   assets/         image loading by content hash into WebGL2 textures, no UI or p5 (@mytw/assets)
   engine/         UI-free WebGL2 renderer: frame data, render graph, effects (@mytw/engine)
   document/       document store: JSON commands, undo and redo, change notifications (@mytw/document)

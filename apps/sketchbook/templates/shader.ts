@@ -1,12 +1,23 @@
 import p5 from 'p5'
 import { SIZES, createWebGLCanvas, centerCanvas } from '@lib/layout'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { VERT_DEFAULT, FRAG_PASSTHROUGH, compileFilterShader } from '@lib/shaders'
+import { VERT_DEFAULT, compileFilterShader } from '@lib/shaders'
 import { createCapture } from '@lib/capture'
 import type { SketchCapture } from '@lib/capture'
 import { mountPanel } from '@mytw/panel'
 import type { Panel } from '@mytw/panel'
 import { defineSchema, param } from '@mytw/schema'
+
+// Passthrough fragment shader (GLSL ES 1.00, as p5 expects). Edit it to add an effect.
+const FRAG = `
+precision mediump float;
+varying vec2 vTexCoord;
+uniform sampler2D uTexture;
+
+void main() {
+  gl_FragColor = texture2D(uTexture, vTexCoord);
+}
+`
 
 // Add params here; read them from panel.values in draw().
 const schema = defineSchema({
@@ -27,7 +38,7 @@ const sketch = (p: p5) => {
 		panel = mountPanel(schema)
 
 		gfx = p.createGraphics(SIZES.SQUARE.width, SIZES.SQUARE.height)
-		shd = compileFilterShader(p, FRAG_PASSTHROUGH())
+		shd = compileFilterShader(p, FRAG)
 	}
 
 	p.draw = () => {

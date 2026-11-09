@@ -12,6 +12,7 @@
 	"dependencies": {
 		"@mytw/assets": "*",
 		"@mytw/engine": "*",
+		"@mytw/fx": "*",
 		"@mytw/lib": "*",
 		"@mytw/panel": "*",
 		"@mytw/schema": "*",
