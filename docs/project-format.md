@@ -184,7 +184,7 @@ v1 checks only this structure. Checking `params` against the named effect's own 
 
 ## Semantics
 
-The validator does not enforce what follows, but the evaluator (#13), the render graph (#14) and asset loading (#15) implement it.
+The validator does not enforce what follows, but the evaluator (#13), the render graph (#14) and asset loading (#15) implement it. `@mytw/scene` (`packages/scene/`) maps a project onto engine frames by these rules.
 
 ### Time
 
@@ -228,7 +228,7 @@ The exact mapping, for a canvas of `W × H` pixels and a source of `w × h` pixe
 
 ### Layer edges
 
-Outside the source bounds (`sourceUv` outside `[0, 1]²`) the layer is transparent. Inside them, `feather` softens the edge: the layer's alpha is `smoothstep(0, feather, d)`, where `d = min(u, 1 − u, v, 1 − v)` is the distance in source UV to the nearest edge. A `feather` of 0 is a hard edge.
+Outside the source bounds (`sourceUv` outside `[0, 1]²`) the layer is transparent. Inside them, `feather` softens the edge: with `(u, v)` the source UV and `f = feather`, the layer's alpha is the product of one ramp per edge, `smoothstep(0, f, u)·smoothstep(0, f, 1 − u)·smoothstep(0, f, v)·smoothstep(0, f, 1 − v)`. Near a corner two ramps multiply, so the corner is slightly softer than either edge. The engine and the Understory sketch both use this product. A `feather` of 0 is a hard edge.
 
 ### Mask
 
@@ -330,7 +330,7 @@ These arrive with a version bump and a migration. v1 rejects each one, as an unk
 
 ## Understory
 
-`packages/schema/fixtures/v1/understory.json` expresses sketch 002, Understory, at its default parameters (`defaults(understorySchema)` from `apps/sketchbook/sketches/002-understory/params.ts`). `apps/sketchbook/__tests__/understory-project.test.ts` checks the fixture against those defaults. The sketch's phases are in radians and the format's are in turns, so a format phase is `param / 2π`, plus an offset where the sketch uses cosine.
+`packages/schema/fixtures/v1/understory.json` expresses sketch 002, Understory, at its default parameters (`defaults(understorySchema)` from `apps/sketchbook/sketches/002-understory/params.ts`). `apps/sketchbook/__tests__/understory-project.test.ts` checks the fixture against those defaults. The sketch's phases are in radians and the format's are in turns, so a format phase is `param / 2π`, plus an offset where the sketch uses cosine. The sketch's shader UV is y-up (p5's `vTexCoord` is 0 at the bottom) and it samples a buffer drawn with a Y-flip, while the format is y-down in canvas and source. So a y position becomes `1 − y`, a y offset changes sign, and a rotation changes sign. The [comparison](#comparison) confirmed each of these against the p5 original.
 
 | Sketch param                                       | Document field                                                                                                                                 | Default value in the fixture |
 | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
@@ -344,18 +344,18 @@ These arrive with a version bump and a migration. v1 rejects each one, as an unk
 | `breatheCycles`, `breathePhase`                    | `modulators["breathe"]`: sine                                                                                                                  | 1, 0                         |
 | `ghostWobbleCycles`, `ghostWobblePhase`            | `modulators["ghost-wobble"]`: sine                                                                                                             | 1, 0                         |
 | `aberrationPulseCycles`, `aberrationPulsePhase`    | `modulators["aberration-pulse"]`: sine, `phase = aberrationPulsePhase / 2π + 0.75` (−cos is sin three quarters on)                             | 1, 0.75                      |
-| `baseCenterX`, `baseCenterY`                       | `base` layer `transform.centerX.value`, `transform.centerY.value`                                                                              | 0.5, 0.72                    |
-| `driftAmp`                                         | `base` layer `drift-x` and `drift-y` binding amounts (`add`)                                                                                   | 0.012                        |
+| `baseCenterX`, `baseCenterY`                       | `base` layer `transform.centerX.value`, and `transform.centerY.value = 1 − baseCenterY`                                                        | 0.5, 0.28                    |
+| `driftAmp`                                         | `base` layer `drift-x` binding amount `driftAmp` and `drift-y` binding amount `−driftAmp` (`add`)                                              | 0.012, −0.012                |
 | `baseZoom`                                         | `base` layer `transform.zoom.value`                                                                                                            | 2                            |
 | `breatheAmp`                                       | `breathe` binding amount (`multiply`) on both layers' zoom                                                                                     | 0.022                        |
 | `baseMirrorX`, `baseMirrorY`                       | `base` layer `transform.mirrorX`, `transform.mirrorY`                                                                                          | false, false                 |
-| `ghostCenterX`, `ghostCenterY`                     | `ghost` layer `transform.centerX.value`, `transform.centerY.value`                                                                             | 0.2, 0.25                    |
-| `driftAmp × ghostScale`, sign from `ghostContrary` | `ghost` layer `drift-x` and `drift-y` binding amounts (negative when `ghostContrary` is on)                                                    | 0.0096                       |
+| `ghostCenterX`, `ghostCenterY`                     | `ghost` layer `transform.centerX.value`, and `transform.centerY.value = 1 − ghostCenterY`                                                      | 0.2, 0.75                    |
+| `driftAmp × ghostScale`, sign from `ghostContrary` | `ghost` layer `drift-x` binding amount `a` and `drift-y` binding amount `−a`, where `a` is negative when `ghostContrary` is on                 | 0.0096, −0.0096              |
 | `ghostZoom`                                        | `ghost` layer `transform.zoom.value`                                                                                                           | 3.4                          |
-| `ghostTilt`                                        | `ghost` layer `transform.rotation.value`                                                                                                       | 0                            |
-| `ghostWobbleAmp`                                   | `ghost-wobble` binding amount on the ghost's rotation                                                                                          | 0.03                         |
+| `ghostTilt`                                        | `ghost` layer `transform.rotation.value = −ghostTilt`                                                                                          | 0                            |
+| `ghostWobbleAmp`                                   | `ghost-wobble` binding amount `−ghostWobbleAmp` on the ghost's rotation                                                                        | −0.03                        |
 | `ghostMirrorX`, `ghostMirrorY`                     | `ghost` layer `transform.mirrorX`, `transform.mirrorY`                                                                                         | true, false                  |
-| `ghostFadeStart`, `ghostFadeEnd`                   | `ghost` layer `mask`: `from: [0.5, ghostFadeStart]`, `to: [0.5, ghostFadeEnd]`                                                                 | 0, 1                         |
+| `ghostFadeStart`, `ghostFadeEnd`                   | `ghost` layer `mask`: `from: [0.5, 1 − ghostFadeStart]`, `to: [0.5, 1 − ghostFadeEnd]`                                                         | 1, 0 (the `from` and `to` y) |
 | `intensity`                                        | `ghost` layer `opacity` (the ghost blends with `multiply`)                                                                                     | 1                            |
 | `feather`                                          | both layers' `feather`                                                                                                                         | 0.06                         |
 | `causticAmp`, `causticScale`, `causticLoopRadius`  | effect `caustic` (`caustic-warp`) params `amount`, `scale`, `loopRadius`                                                                       | 0.005, 2, 0.8                |
@@ -365,14 +365,49 @@ These arrive with a version bump and a migration. v1 rejects each one, as an unk
 
 The base layer's rotation is 0: its tilt, spin and wobble default to 0. `spin`, `ghostSpin`, `baseTilt`, `wobbleAmp`, `wobbleCycles` and `wobblePhase` have no binding in the fixture at their defaults.
 
-### Known differences
+### Comparison
 
-These are noted here, not resolved. The Understory proof (#19) compares renders and corrects the fixture where needed.
+The Understory proof (#19) renders the p5 original and this fixture side by side and diffs them. Run `yarn dev`, then open `/sketches/006-understory-compare/?run`. The page draws the original with sketch 002's own render module (`sketches/002-understory/render.ts`) at `defaults(understorySchema)`. It draws the fixture through `@mytw/scene` and `@mytw/engine`, with no Understory-specific code. Both render at 1080 × 1920 and pixel density 1. The page logs its report as JSON under `[understory-compare]`. **Record side by side** streams a 2160 × 1920 loop to the capture server for `yarn convert`.
 
-- The sketch draws its buffer with a Y-flip, which makes the meaning of its center Y ambiguous (see `CENTER_Y_HELP` in the sketch's `params.ts`). The fixture keeps the sketch's values, and #19 changes them to `1 − y` if its comparison shows that.
-- The sign of `rotation` relative to the sketch is also confirmed in #19.
-- The sketch warps the layers before compositing them and leaves the mask unwarped, while the format applies the caustic warp and the chromatic aberration as global post-passes. #19 judges whether that difference is visible.
-- Effect ids and param names are provisional until the effect bank (#16), which updates the fixture if it renames them.
+**Threshold.** At each of the frames 0, 45, 90, 135, 180 and 224, the mean absolute difference over R, G and B must be at most 2 (on 0–255). At most 1% of pixels may have a channel that differs by more than 16. Alpha is ignored. The threshold is fixed, so don't loosen it to make a frame pass.
+
+**Results** (headless Chrome on Apple silicon, after the corrections below):
+
+| Frame | Phase  | Mean abs | Max | Over 16 | Result |
+| ----- | ------ | -------- | --- | ------- | ------ |
+| 0     | 0      | 0.370    | 70  | 0.011%  | pass   |
+| 45    | 0.2    | 0.738    | 53  | 0.070%  | pass   |
+| 90    | 0.4    | 0.613    | 22  | 0.006%  | pass   |
+| 135   | 0.6    | 0.616    | 22  | 0.010%  | pass   |
+| 180   | 0.8    | 0.734    | 45  | 0.028%  | pass   |
+| 224   | 0.9956 | 0.374    | 82  | 0.014%  | pass   |
+
+The overall verdict is pass. A full loop (225 frames at 30 fps), recorded side by side, shows no visible difference between the halves. Its seam, from frame 224 to frame 0, is a normal one-frame step.
+
+**Corrections the comparison settled.** With the fixture as first written, every frame failed (mean abs 23–25, with 73–77% of pixels over 16), because the framing was upside down.
+
+- **Center Y**: the sketch measures center Y up from the bottom of the image, so the fixture uses `1 − y` and negates the y drift.
+- **Mask**: the sketch's fade runs in y-up screen space, so the ghost mask runs from `[0.5, 1]` to `[0.5, 0]`. With center Y and the mask flipped, mean abs fell to 1.6–2.4, with 2.0–4.2% of pixels over 16.
+- **Rotation sign**: the sketch's `rot()` turns the other way in y-down space, so the fixture negates the ghost wobble's amount. This lowered the two frames with the most wobble: frame 45 from 2.42 to 2.09 and frame 135 from 2.26 to 2.04.
+
+**Remaining differences.** None of them is visible in playback.
+
+- **Rotation in unscaled UV.** The sketch rotates the ghost in UV units that aren't aspect-corrected, so its wobble shears the ghost slightly. The format rotates in pixel space. Ghost edges move by a pixel or two at the peak of the wobble, which is why frames 45 and 180 have about twice the mean abs of frame 0. Not visible.
+- **Post-passes at the canvas edge.** The caustic warp and the chromatic aberration are global passes on the composite, and they clamp to the edge column when they sample past the canvas. The sketch samples the source image beyond the canvas edge instead. This shows as a column a few pixels wide at the left edge, and it gives the max of 70–82 at frames 0 and 224. Barely visible, and only if you know where to look.
+- **Warp before or after compositing.** The sketch warps the layer lookups and leaves the mask and the vignette unwarped. The format warps the composite, so the warp also moves the mask and the vignette by a few pixels. Both are smooth gradients, so the difference stays below one level. Not visible.
+- **Aberration by resampling.** The sketch recomposes the whole frame once per channel, while `chromatic-aberration` resamples the composite. With the caustic warp off on both sides, also turning off the aberration changes mean abs by 0.02. Not visible.
+- **Cover fit and precision.** The source is 1688 × 3000 and the canvas is 1080 × 1920, so the format's cover fit and the sketch's stretched UV differ in scale by 0.03%, which is under 0.2 px. The sketch also uses `mediump`. With every effect off and the ghost hidden on both sides, mean abs is 0.10. Not visible.
+
+**Engine gaps found:**
+
+- **Fixed**: `caustic-warp` sampled its noise in the host's UV. In the engine's y-down UV, its field was flipped relative to the p5 original it was ported from, and four of the six frames failed (up to 4.1% of pixels over 16). `packages/fx/effects/causticWarp.ts` now lays the noise out y-up and flips the y displacement. Its params and version are unchanged.
+- **Fixed**: `layerToSourceMatrix` accepts a `Float64Array` as `out` (`packages/engine/transform.ts`), so tests can check the mapping to 1e-9.
+- **Fixed**: `SketchCapture` only logged a failed start to the console. It now keeps the reason in `startError` (`packages/lib/capture/sketch-capture.ts`), and the compare page shows it.
+- **Checked, no gap**: fx fragments declare `out vec4 fxColor`, while the engine README's example uses `outColor`. A single `out` binds to location 0, and every Understory effect compiled and rendered in the engine unchanged.
+- **To file**: "fx: define the UV orientation effects see in each host". p5 hosts give y-up UV and the engine gives y-down. `sine-displacement` and `scanlines` depend on the orientation too.
+- **To file**: "engine: let effect passes sample past the canvas edge (overscan)". This is the edge column described above.
+- **To file**: "scene: bind effect texture inputs such as feedback's previous frame". `@mytw/scene` sets no `textures` yet.
+- **To file**: "sketchbook: update 004-engine-demo to the corrected Understory framing". The demo still uses the uncorrected center Y and mask.
 
 ## Changelog
 
