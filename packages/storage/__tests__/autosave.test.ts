@@ -3,7 +3,7 @@ import { IDBFactory } from 'fake-indexeddb'
 
 import { createDocumentStore } from '@mytw/document'
 import type { DocumentStore } from '@mytw/document'
-import { validateProject } from '@mytw/schema'
+import { PROJECT_SCHEMA_VERSION, validateProject } from '@mytw/schema'
 import type { Project } from '@mytw/schema'
 import {
 	createAutosave,
@@ -19,7 +19,7 @@ const META: ProjectMeta = {
 	name: 'Untitled',
 	createdAt: '2026-01-01T00:00:00.000Z',
 	updatedAt: '2026-01-01T00:00:00.000Z',
-	schemaVersion: 2,
+	schemaVersion: PROJECT_SCHEMA_VERSION,
 	hasThumbnail: false,
 }
 

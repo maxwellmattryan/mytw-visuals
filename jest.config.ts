@@ -19,6 +19,7 @@ const config: Config = {
 		'^@mytw/layers$': '<rootDir>/packages/layers/index.ts',
 		'^@mytw/storage$': '<rootDir>/packages/storage/index.ts',
 		'^@mytw/home$': '<rootDir>/packages/home/index.ts',
+		'^@mytw/effects$': '<rootDir>/packages/effects/index.ts',
 	},
 }
 

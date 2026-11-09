@@ -1,4 +1,4 @@
-// Project document format v2. See docs/project-format.md. Every document type is inferred from
+// Project document format v3. See docs/project-format.md. Every document type is inferred from
 // the codecs below, so the validator and the types describe one format.
 import {
 	animatableNumber,
@@ -7,6 +7,7 @@ import {
 	type Codec,
 	type Infer,
 	issue,
+	json,
 	literal,
 	number,
 	type NumberOptions,
@@ -23,7 +24,7 @@ import { PARAMS_FORMAT, PARAMS_FORMAT_VERSION } from './snapshot'
 export type { ProjectIssue, ProjectIssueCode } from './codec'
 
 export const PROJECT_FORMAT = 'mytw-project'
-export const PROJECT_SCHEMA_VERSION = 2
+export const PROJECT_SCHEMA_VERSION = 3
 
 export const ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/
 export const CONTENT_HASH_PATTERN = /^sha256:[0-9a-f]{64}$/
@@ -136,19 +137,43 @@ const effectParamCodec: Codec<EffectParamValue> = {
 	},
 }
 
+const effectName = string({
+	pattern: NAME_PATTERN,
+	description: 'an effect name (lowercase letters and digits, joined by -)',
+})
+
 const effectInstanceCodec = object(
 	{
 		id,
-		effect: string({
-			pattern: NAME_PATTERN,
-			description: 'an effect name (lowercase letters and digits, joined by -)',
-		}),
+		effect: effectName,
 		version: integer({ min: 1 }),
 		enabled: boolean(),
 		params: record(
 			PARAM_KEY_PATTERN,
 			'a param name (a letter, then letters or digits)',
 			effectParamCodec
+		),
+	},
+	undefined,
+	{ extensions: true }
+)
+
+/**
+ * A custom GLSL effect stored in the project. The format only checks its shape: `@mytw/fx`'s
+ * `createCustomEffect` checks the params, chunks and GLSL when the scene uses it.
+ */
+const customEffectCodec = object(
+	{
+		id: effectName,
+		version: integer({ min: 1 }),
+		name: string({ min: 1, max: 200 }),
+		glsl: string({ max: 100_000 }),
+		params: record(PARAM_KEY_PATTERN, 'a param name (a letter, then letters or digits)', json()),
+		chunks: array(
+			string({
+				pattern: NAME_PATTERN,
+				description: 'a chunk name (lowercase letters and digits, joined by -)',
+			})
 		),
 	},
 	undefined,
@@ -276,7 +301,7 @@ export const projectCodec = object(
 		tracks: array(trackCodec),
 		effects: array(effectInstanceCodec),
 	},
-	undefined,
+	{ customEffects: array(customEffectCodec) },
 	{ extensions: true }
 )
 
@@ -293,3 +318,4 @@ export type AnimatableNumber = Infer<typeof animatableCodec>
 export type ModBinding = Infer<typeof modBindingCodec>
 export type Modulator = Infer<typeof modulatorCodec>
 export type EffectInstance = Infer<typeof effectInstanceCodec>
+export type ProjectCustomEffect = Infer<typeof customEffectCodec>

@@ -9,7 +9,7 @@
 	],
 	"scripts": {
 		"dev": "yarn workspace @mytw/sketchbook dev",
-		"build": "tsc --noEmit && tsc -p packages/schema && tsc -p packages/document && tsc -p packages/engine && tsc -p packages/export && tsc -p packages/scene && tsc -p packages/storage && svelte-check --tsconfig ./packages/panel/tsconfig.json --fail-on-warnings && svelte-check --tsconfig ./packages/layers/tsconfig.json --fail-on-warnings && svelte-check --tsconfig ./packages/home/tsconfig.json --fail-on-warnings && yarn workspace @mytw/sketchbook build",
+		"build": "tsc --noEmit && tsc -p packages/schema && tsc -p packages/document && tsc -p packages/engine && tsc -p packages/export && tsc -p packages/scene && tsc -p packages/storage && svelte-check --tsconfig ./packages/panel/tsconfig.json --fail-on-warnings && svelte-check --tsconfig ./packages/layers/tsconfig.json --fail-on-warnings && svelte-check --tsconfig ./packages/effects/tsconfig.json --fail-on-warnings && svelte-check --tsconfig ./packages/home/tsconfig.json --fail-on-warnings && yarn workspace @mytw/sketchbook build",
 		"preview": "yarn workspace @mytw/sketchbook preview",
 		"new": "yarn workspace @mytw/sketchbook new",
 		"lint": "eslint .",

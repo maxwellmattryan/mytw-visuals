@@ -15,6 +15,7 @@ export type {
 	Project,
 	ProjectAsset,
 	ProjectClip,
+	ProjectCustomEffect,
 	ProjectIssue,
 	ProjectIssueCode,
 	ProjectImageLayer,

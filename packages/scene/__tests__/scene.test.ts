@@ -6,13 +6,14 @@ import { fileURLToPath } from 'url'
 import { clamp, easeInOutQuad, fbm, valueNoise2 } from '@lib/math'
 import { layerToSourceMatrix } from '@mytw/engine'
 import type { RenderFrame, RenderLayer } from '@mytw/engine'
-import { parseProject } from '@mytw/schema'
+import { parseProject, PROJECT_SCHEMA_VERSION } from '@mytw/schema'
 import type {
 	AnimatableNumber,
 	EffectInstance,
 	Modulator,
 	Project,
 	ProjectClip,
+	ProjectCustomEffect,
 	ProjectImageLayer,
 } from '@mytw/schema'
 import { compileScene, SceneError } from '@mytw/scene'
@@ -69,7 +70,7 @@ function testClip(overrides: Partial<ProjectClip> = {}): ProjectClip {
 function testProject(overrides: Partial<Project> = {}): Project {
 	return {
 		format: 'mytw-project',
-		schemaVersion: 2,
+		schemaVersion: PROJECT_SCHEMA_VERSION,
 		name: 'Test',
 		output: { width: 1080, height: 1920, fps: 30, background: '#336699' },
 		timeline: { mode: 'loop', frames: 100 },
@@ -83,6 +84,21 @@ function testProject(overrides: Partial<Project> = {}): Project {
 
 function effect(id: string, name: string, overrides: Partial<EffectInstance> = {}): EffectInstance {
 	return { id, effect: name, version: 1, enabled: true, params: {}, ...overrides }
+}
+
+function customEffect(
+	id: string,
+	overrides: Partial<ProjectCustomEffect> = {}
+): ProjectCustomEffect {
+	return {
+		id,
+		version: 1,
+		name: 'Custom',
+		glsl: 'vec4 effect(vec2 uv) {\n  return texture(uInput, uv);\n}',
+		params: {},
+		chunks: [],
+		...overrides,
+	}
 }
 
 function only(frame: RenderFrame): RenderLayer {
@@ -510,5 +526,93 @@ describe('compileScene', () => {
 		const scene = compileScene(testProject())
 		for (const f of [-1, 100, 1.5, Number.NaN]) expect(() => scene.frameAt(f)).toThrow(RangeError)
 		expect(() => scene.frameAt(99)).not.toThrow()
+	})
+
+	it('renders custom effects', () => {
+		const project = testProject({
+			customEffects: [
+				customEffect('unused', { glsl: 'not glsl' }),
+				customEffect('fade', {
+					params: { amount: { kind: 'number', label: 'Amount', default: 0.1, min: 0, max: 1 } },
+				}),
+			],
+			tracks: [
+				{
+					id: 'track',
+					kind: 'visual',
+					clips: [testClip({ layers: [testLayer({ effects: [effect('a', 'fade')] })] })],
+				},
+			],
+			effects: [
+				effect('b', 'vignette'),
+				effect('c', 'fade', { enabled: false, params: { amount: 2 } }),
+			],
+		})
+		const scene = compileScene(project)
+		expect(scene.effects.map((program) => program.id).sort()).toEqual(['fade', 'vignette'])
+		const fade = scene.effects.find((program) => program.id === 'fade')
+		expect(fade?.fragment).toMatch(/^#version 300 es/)
+		expect(fade?.fragment).toContain('uniform float uAmount;')
+		expect(fade?.fragment).toContain('return texture(uInput, uv);')
+
+		const frame = scene.frameAt(25)
+		expect(only(frame).effects).toEqual([
+			{ effect: 'fade', enabled: true, uniforms: { uAmount: 0.1, uPhase: 0.25 } },
+		])
+		expect(frame.effects?.[1]).toEqual({
+			effect: 'fade',
+			enabled: false,
+			uniforms: { uAmount: 1, uPhase: 0.25 },
+		})
+	})
+
+	it('rejects invalid custom effects', () => {
+		const cases: [Project, string, string][] = [
+			[
+				testProject({
+					customEffects: [customEffect('ok'), customEffect('broken', { glsl: 'void main() {}' })],
+					effects: [effect('a', 'broken')],
+				}),
+				'customEffects[1]',
+				'Effect "broken": glsl must define vec4 effect(vec2 uv)',
+			],
+			[
+				testProject({
+					customEffects: [customEffect('vignette')],
+					effects: [effect('a', 'vignette')],
+				}),
+				'customEffects[0]',
+				'id "vignette" is used by a built-in effect',
+			],
+			[
+				testProject({
+					customEffects: [customEffect('odd', { chunks: ['nope'] })],
+					tracks: [
+						{
+							id: 'track',
+							kind: 'visual',
+							clips: [testClip({ layers: [testLayer({ effects: [effect('x', 'odd')] })] })],
+						},
+					],
+				}),
+				'customEffects[0]',
+				'unknown chunk "nope"',
+			],
+		]
+		for (const [project, path, message] of cases) {
+			const error = thrown(() => compileScene(project))
+			expect(error).toBeInstanceOf(SceneError)
+			expect(error).toMatchObject({ path, message: `${path}: ${message}` })
+		}
+
+		const version = thrown(() =>
+			compileScene(
+				testProject({
+					customEffects: [customEffect('fade')],
+					effects: [effect('a', 'fade', { version: 2 })],
+				})
+			)
+		)
+		expect((version as SceneError).path).toBe('effects[0].version')
 	})
 })

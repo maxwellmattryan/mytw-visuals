@@ -24,6 +24,15 @@ export const MIGRATIONS: readonly Migration[] = [
 			return doc
 		},
 	},
+	{
+		from: 2,
+		to: 3,
+		description: 'Adds custom effects',
+		migrate: (doc) => {
+			doc.schemaVersion = 3
+			return doc
+		},
+	},
 ]
 
 export type MigrateProjectResult =

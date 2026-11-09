@@ -1,28 +1,28 @@
-# Project format (v2)
+# Project format (v3)
 
 A project is one versioned JSON document that describes a looping visual: its output size, its timeline, the images it uses, the modulators that animate it, its tracks of clips and layers, and its effect chains. The document is independent of the code that renders it. Commands, the evaluator, the render graph, asset storage and the effect bank all read and write this one format.
 
-This page specifies format v2. `@mytw/schema` (`packages/schema/`) implements it:
+This page specifies format v3. `@mytw/schema` (`packages/schema/`) implements it:
 
-| Export                       | What it does                                                                                                                                                                                                                                                                                           |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `PROJECT_FORMAT`             | `"mytw-project"`                                                                                                                                                                                                                                                                                       |
-| `PROJECT_SCHEMA_VERSION`     | `2`, the latest version this code reads                                                                                                                                                                                                                                                                |
-| `parseProject(input)`        | Reads JSON text or a parsed value: checks the envelope, migrates, validates, and returns a copy that shares no object with the input. Never throws.                                                                                                                                                    |
-| `validateProject(doc)`       | Validates a document at the current version, without migrating. Returns the same reference on success.                                                                                                                                                                                                 |
-| `serializeProject(project)`  | `JSON.stringify(project, null, '\t')`                                                                                                                                                                                                                                                                  |
-| `migrateProject(doc, opts?)` | Runs the migration steps from the document's version up to the latest. Never throws, never mutates its input.                                                                                                                                                                                          |
-| `MIGRATIONS`                 | The ordered migration steps: one step, v1 → v2.                                                                                                                                                                                                                                                        |
-| Types                        | `Project`, `ProjectAsset`, `ProjectTrack`, `ProjectClip`, `ProjectLayer`, `ProjectImageLayer`, `ProjectSketchLayer`, `LayerTransform`, `LayerMask`, `AnimatableNumber`, `ModBinding`, `Modulator`, `EffectInstance`, `ProjectIssue`, `ProjectIssueCode`, `ParseProjectResult`, `ValidateProjectResult` |
+| Export                       | What it does                                                                                                                                                                                                                                                                                                                  |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PROJECT_FORMAT`             | `"mytw-project"`                                                                                                                                                                                                                                                                                                              |
+| `PROJECT_SCHEMA_VERSION`     | `3`, the latest version this code reads                                                                                                                                                                                                                                                                                       |
+| `parseProject(input)`        | Reads JSON text or a parsed value: checks the envelope, migrates, validates, and returns a copy that shares no object with the input. Never throws.                                                                                                                                                                           |
+| `validateProject(doc)`       | Validates a document at the current version, without migrating. Returns the same reference on success.                                                                                                                                                                                                                        |
+| `serializeProject(project)`  | `JSON.stringify(project, null, '\t')`                                                                                                                                                                                                                                                                                         |
+| `migrateProject(doc, opts?)` | Runs the migration steps from the document's version up to the latest. Never throws, never mutates its input.                                                                                                                                                                                                                 |
+| `MIGRATIONS`                 | The ordered migration steps: v1 → v2 and v2 → v3.                                                                                                                                                                                                                                                                             |
+| Types                        | `Project`, `ProjectAsset`, `ProjectTrack`, `ProjectClip`, `ProjectLayer`, `ProjectImageLayer`, `ProjectSketchLayer`, `LayerTransform`, `LayerMask`, `AnimatableNumber`, `ModBinding`, `Modulator`, `EffectInstance`, `ProjectCustomEffect`, `ProjectIssue`, `ProjectIssueCode`, `ParseProjectResult`, `ValidateProjectResult` |
 
 The types are inferred from the validator's codecs (`packages/schema/project.ts`), so the checks and the types can't drift. The validator has no dependencies.
 
-Example documents live in `packages/schema/fixtures/`. In `v1/`, `minimal.json` is the smallest valid project and `understory.json` expresses sketch 002 (see [Understory](#understory)). They stay at v1 and open through the migration. `v2/sketch-layer.json` draws a sketch layer over an image layer.
+Example documents live in `packages/schema/fixtures/`. In `v1/`, `minimal.json` is the smallest valid project and `understory.json` expresses sketch 002 (see [Understory](#understory)). They stay at v1 and open through the migration. `v2/sketch-layer.json` draws a sketch layer over an image layer, and `v3/custom-effect.json` runs a custom GLSL effect on the global chain.
 
 ```json
 {
 	"format": "mytw-project",
-	"schemaVersion": 2,
+	"schemaVersion": 3,
 	"name": "Minimal",
 	"output": { "width": 1080, "height": 1080, "fps": 30, "background": "#000000" },
 	"timeline": { "mode": "loop", "frames": 60 },
@@ -44,18 +44,19 @@ Example documents live in `packages/schema/fixtures/`. In `v1/`, `minimal.json` 
 
 ## Document
 
-| Field           | Type                               | Rule                                                                          | Neutral |
-| --------------- | ---------------------------------- | ----------------------------------------------------------------------------- | ------- |
-| `format`        | `"mytw-project"`                   | literal                                                                       |         |
-| `schemaVersion` | integer                            | `2` for this version. See [Versions](#versions).                              |         |
-| `name`          | string                             | 1 to 200 characters. Display only.                                            |         |
-| `output`        | [Output](#output)                  |                                                                               |         |
-| `timeline`      | [Timeline](#timeline)              |                                                                               |         |
-| `assets`        | record of [Asset](#assets)         | keyed by content hash                                                         | `{}`    |
-| `modulators`    | record of [Modulator](#modulators) | keyed by id                                                                   | `{}`    |
-| `tracks`        | [Track](#tracks)`[]`               | may be empty. The first track is the bottom of the stack.                     | `[]`    |
-| `effects`       | [EffectInstance](#effects)`[]`     | the global post chain, applied to the final composite in order. May be empty. | `[]`    |
-| `extensions`    | optional record of JSON            | see [Unknown fields and extensions](#unknown-fields-and-extensions)           | absent  |
+| Field           | Type                                         | Rule                                                                                     | Neutral |
+| --------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------- | ------- |
+| `format`        | `"mytw-project"`                             | literal                                                                                  |         |
+| `schemaVersion` | integer                                      | `3` for this version. See [Versions](#versions).                                         |         |
+| `name`          | string                                       | 1 to 200 characters. Display only.                                                       |         |
+| `output`        | [Output](#output)                            |                                                                                          |         |
+| `timeline`      | [Timeline](#timeline)                        |                                                                                          |         |
+| `assets`        | record of [Asset](#assets)                   | keyed by content hash                                                                    | `{}`    |
+| `modulators`    | record of [Modulator](#modulators)           | keyed by id                                                                              | `{}`    |
+| `tracks`        | [Track](#tracks)`[]`                         | may be empty. The first track is the bottom of the stack.                                | `[]`    |
+| `effects`       | [EffectInstance](#effects)`[]`               | the global post chain, applied to the final composite in order. May be empty.            | `[]`    |
+| `customEffects` | optional [CustomEffect](#custom-effects)`[]` | custom GLSL effects that instances can use by id. See [Custom effects](#custom-effects). | absent  |
+| `extensions`    | optional record of JSON                      | see [Unknown fields and extensions](#unknown-fields-and-extensions)                      | absent  |
 
 ### Output
 
@@ -79,7 +80,7 @@ Assets are content-addressed. The key of each entry in `assets` is `sha256:` fol
 
 | Field        | Type                                            | Rule                                    | Meaning                    |
 | ------------ | ----------------------------------------------- | --------------------------------------- | -------------------------- |
-| `kind`       | `"image"`                                       | the only kind in v2                     |                            |
+| `kind`       | `"image"`                                       | the only kind in v3                     |                            |
 | `mimeType`   | `"image/png"`, `"image/jpeg"` or `"image/webp"` |                                         | how to decode the bytes    |
 | `width`      | integer                                         | at least 1                              | intrinsic width in pixels  |
 | `height`     | integer                                         | at least 1                              | intrinsic height in pixels |
@@ -107,7 +108,7 @@ A modulator with `cycles: 0` is constant. Modulators that nothing binds are allo
 | Field        | Type                    | Rule                                               |
 | ------------ | ----------------------- | -------------------------------------------------- |
 | `id`         | id                      |                                                    |
-| `kind`       | `"visual"`              | the only kind in v2                                |
+| `kind`       | `"visual"`              | the only kind in v3                                |
 | `clips`      | [Clip](#clips)`[]`      | may be empty. Clips in one track must not overlap. |
 | `extensions` | optional record of JSON |                                                    |
 
@@ -170,7 +171,7 @@ Like effect params, `params` is checked only structurally. The host checks it ag
 
 | Field  | Type                | Rule                                                |
 | ------ | ------------------- | --------------------------------------------------- |
-| `kind` | `"linear-gradient"` | the only kind in v2                                 |
+| `kind` | `"linear-gradient"` | the only kind in v3                                 |
 | `from` | `[x, y]`            | finite numbers, in canvas UV                        |
 | `to`   | `[x, y]`            | finite numbers, in canvas UV, different from `from` |
 
@@ -193,7 +194,25 @@ An **EffectInstance** is one step in an effect chain, either the global chain (`
 | `params`     | record                  | keys match `^[A-Za-z][A-Za-z0-9]*$`. Each value is an AnimatableNumber, a boolean, a string or a `[number, number]` pair. |
 | `extensions` | optional record of JSON |                                                                                                                           |
 
-v2 checks only this structure. Checking `params` against the named effect's own schema, and migrating between effect versions, belongs to the effect registry (#16).
+The format checks only this structure. Checking `params` against the named effect's own schema, and migrating between effect versions, belongs to the effect registry (#16).
+
+### Custom effects
+
+A **CustomEffect** is an effect written in GLSL and stored in the project, so a project that uses one renders anywhere without extra code. Instances use it by putting its `id` in their `effect` field.
+
+| Field        | Type                    | Rule                                                                                                                                                          |
+| ------------ | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`         | string                  | an effect name: `^[a-z0-9]+(-[a-z0-9]+)*$`. Unique within `customEffects`.                                                                                    |
+| `version`    | integer                 | at least 1. An instance must name the same `version`.                                                                                                         |
+| `name`       | string                  | 1 to 200 characters. Display only.                                                                                                                            |
+| `glsl`       | string                  | at most 100,000 characters of GLSL ES 3.00 that defines `vec4 effect(vec2 uv)`, as for a built-in effect (see `packages/fx/README.md`)                        |
+| `params`     | record of JSON          | keys match `^[A-Za-z][A-Za-z0-9]*$`. Each value is a param definition, such as `{ "kind": "number", "label": "Amount", "default": 0.1, "min": 0, "max": 1 }`. |
+| `chunks`     | string`[]`              | shared GLSL helpers to include, by name, such as `"noise"`                                                                                                    |
+| `extensions` | optional record of JSON |                                                                                                                                                               |
+
+The format checks only this structure. `createCustomEffect` in `@mytw/fx` checks the param definitions, the chunk names and the `effect` signature when the scene builds the effect.
+
+The scene resolves an instance's `effect` against the built-in effect bank first, then `customEffects`. A custom effect renders exactly like a built-in one, and its program id is its `id`. The instance's `version` must always match the custom effect's `version`. A custom effect that an instance uses but that can't be built, including one whose `id` a built-in effect already owns, fails the scene at `customEffects[i]`. Unused custom effects are never built, so an invalid one doesn't stop the project rendering.
 
 ## Semantics
 
@@ -275,7 +294,7 @@ These run only when the structure is valid. Each rule reports its own issue code
 | Code        | Rule                                                                                                                                                                                                   |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `reference` | Every image layer `asset` is a key of `assets`, and every binding's `modulator` is a key of `modulators`.                                                                                              |
-| `duplicate` | Ids are unique across all tracks, clips, layers and effects (layer and global) in the document.                                                                                                        |
+| `duplicate` | Ids are unique across all tracks, clips, layers and effects (layer and global) in the document. Custom effect ids are unique within `customEffects`, a namespace apart from those ids.                 |
 | `timeline`  | A clip satisfies `start + frames <= timeline.frames` and `fadeIn + fadeOut <= frames`. Clips in one track don't overlap. Clips that touch, where one starts on the frame after another ends, are fine. |
 | `order`     | Keyframe `at` values are strictly increasing.                                                                                                                                                          |
 | `seam`      | In loop mode, a keyframes modulator's first and last values are equal.                                                                                                                                 |
@@ -287,7 +306,7 @@ Unused assets and modulators are allowed.
 
 Every object is strict. A key the format doesn't define is an `unknown` issue, and the document is rejected. This keeps typos and fields from newer versions from being silently dropped.
 
-The one exception is the optional `extensions` object, allowed on the document and on assets, tracks, clips, layers, effects and modulators. Its keys are any non-empty strings, and each value must be JSON: `null`, a boolean, a finite number, a string, an array or a plain object, checked recursively and nested at most 64 levels deep. Anything else, such as `NaN`, `undefined` or a `Date` in a parsed object, is a `type` issue. Extensions are preserved verbatim through parse, migrate and serialize, and the format never reads them. Tools that need to store their own data use extensions, ideally under a namespaced key such as `"com.example.tool"`.
+The one exception is the optional `extensions` object, allowed on the document and on assets, tracks, clips, layers, effects, custom effects and modulators. Its keys are any non-empty strings, and each value must be JSON: `null`, a boolean, a finite number, a string, an array or a plain object, checked recursively and nested at most 64 levels deep. Anything else, such as `NaN`, `undefined` or a `Date` in a parsed object, is a `type` issue. Extensions are preserved verbatim through parse, migrate and serialize, and the format never reads them. Tools that need to store their own data use extensions, ideally under a namespaced key such as `"com.example.tool"`.
 
 Keys are always kept as own data, never followed: a `"__proto__"` key in `extensions` stays an ordinary key and never changes any object's prototype.
 
@@ -303,7 +322,7 @@ Keys are always kept as own data, never followed: a `"__proto__"` key in `extens
 | --------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------- |
 | `json`          | The input text is not JSON.                                                        | `Not valid JSON`                                               |
 | `format`        | Not a `mytw-project` document, or `schemaVersion` is not an integer of at least 1. | `"mytw-params" is not mytw-project`                            |
-| `newer-version` | `schemaVersion` is higher than this code reads.                                    | `saved by a newer version (v3), this app reads up to v2`       |
+| `newer-version` | `schemaVersion` is higher than this code reads.                                    | `saved by a newer version (v4), this app reads up to v3`       |
 | `migration`     | A migration step is missing, threw, or returned the wrong `schemaVersion`.         | `no migration from v2 to v3`                                   |
 | `missing`       | A required field is absent.                                                        | `is missing`                                                   |
 | `unknown`       | A field the format doesn't define.                                                 | `is not a known field`                                         |
@@ -338,7 +357,7 @@ To change the format from v`n` to v`n + 1`:
 
 ## Reserved for later
 
-These arrive with a version bump and a migration. v2 rejects each one, as an unknown field or an unknown option:
+These arrive with a version bump and a migration. v3 rejects each one, as an unknown field or an unknown option:
 
 - an `"audio"` track kind (#32)
 - a top-level `formats` key, for per-format framing and parameter overrides (#31)
@@ -428,5 +447,6 @@ The overall verdict is pass. A full loop (225 frames at 30 fps), recorded side b
 
 ## Changelog
 
+- **v3**: adds the optional top-level `customEffects` array (see [Custom effects](#custom-effects)) and the `duplicate` rule for custom effect ids. The migration from v2 changes only `schemaVersion`, since every v2 document is a valid v3 document with no custom effects.
 - **v2**: adds the `"sketch"` layer kind (see [Sketch layers](#sketch-layers)), and the `reference` rule for `asset` now applies to image layers only. The migration from v1 changes only `schemaVersion`, since every v1 document is a valid v2 document.
 - **v1**: the first version of the format.

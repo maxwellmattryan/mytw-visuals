@@ -1,0 +1,73 @@
+{
+	"format": "mytw-project",
+	"schemaVersion": 3,
+	"name": "Custom effect",
+	"output": { "width": 1080, "height": 1080, "fps": 30, "background": "#000000" },
+	"timeline": { "mode": "loop", "frames": 120 },
+	"assets": {
+		"sha256:0000000000000000000000000000000000000000000000000000000000000000": {
+			"kind": "image",
+			"mimeType": "image/png",
+			"width": 1080,
+			"height": 1080,
+			"name": "base.png"
+		}
+	},
+	"modulators": {},
+	"tracks": [
+		{
+			"id": "main",
+			"kind": "visual",
+			"clips": [
+				{
+					"id": "loop",
+					"start": 0,
+					"frames": 120,
+					"fadeIn": 0,
+					"fadeOut": 0,
+					"layers": [
+						{
+							"id": "base",
+							"kind": "image",
+							"asset": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+							"visible": true,
+							"opacity": 1,
+							"blend": "normal",
+							"feather": 0,
+							"transform": {
+								"centerX": 0.5,
+								"centerY": 0.5,
+								"zoom": 1,
+								"rotation": 0,
+								"mirrorX": false,
+								"mirrorY": false
+							},
+							"effects": []
+						}
+					]
+				}
+			]
+		}
+	],
+	"effects": [
+		{
+			"id": "fade",
+			"effect": "fade",
+			"version": 1,
+			"enabled": true,
+			"params": { "amount": 0.25 }
+		}
+	],
+	"customEffects": [
+		{
+			"id": "fade",
+			"version": 1,
+			"name": "Fade",
+			"glsl": "vec4 effect(vec2 uv) {\n  vec4 color = texture(uInput, uv);\n  return vec4(color.rgb * (1.0 - uAmount), color.a);\n}",
+			"params": {
+				"amount": { "kind": "number", "label": "Amount", "default": 0.1, "min": 0, "max": 1 }
+			},
+			"chunks": []
+		}
+	]
+}

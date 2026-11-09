@@ -154,7 +154,7 @@ On failure it deletes everything it created. On success it deletes the shader ob
 3. Pick defaults that leave the image unchanged or nearly so, give every number a `min` and `max`, and make any value multiplied by `uPhase` a whole number (`param.integer` or `loopSafe`).
 4. Add it to `EFFECTS` in `packages/fx/effects/index.ts`. The tests in `__tests__/effects.test.ts` then parse its shader with `@shaderfrog/glsl-parser`, check a uniform for each param and validate its defaults, with no further edits.
 5. If it belongs in the built-in table above, add it there and to the `table` in `effects.test.ts`.
-6. Run `yarn test`, then `yarn dev` and open `/sketches/004-fx-check/` to confirm it compiles on a real GPU.
+6. Run `yarn test`, then `yarn dev` and open `/sketches/004-fx-check/` to confirm it compiles on a real GPU. The effect also appears in the editor's effect browser at `/sketches/007-layers/`, with controls built from its params and no editor changes.
 
 To add a chunk, add its GLSL and id to `chunks.ts`, list any `requires`, and keep the body valid in GLSL ES 1.00 and 3.00: no `texture`/`texture2D`, no `in`/`out`/`varying` and no `#` directives.
 

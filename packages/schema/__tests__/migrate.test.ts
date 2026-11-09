@@ -3,7 +3,7 @@ import { readFileSync } from 'fs'
 import { dirname, resolve } from 'path'
 import { fileURLToPath } from 'url'
 
-import { MIGRATIONS, migrateProject, parseProject } from '@mytw/schema'
+import { MIGRATIONS, migrateProject, parseProject, PROJECT_SCHEMA_VERSION } from '@mytw/schema'
 import type { Migration } from '@mytw/schema'
 
 type Doc = Record<string, unknown>
@@ -57,8 +57,11 @@ function migrationMessage(doc: Doc, migrations: Migration[], latest: number) {
 }
 
 describe('migrateProject', () => {
-	it('migrates v1 to v2 by bumping the version only', () => {
-		expect(MIGRATIONS.map(({ from, to }) => [from, to])).toEqual([[1, 2]])
+	it('migrates v1 to the latest by bumping the version only', () => {
+		expect(MIGRATIONS.map(({ from, to }) => [from, to])).toEqual([
+			[1, 2],
+			[2, 3],
+		])
 		const fixture = readFileSync(
 			resolve(dirname(fileURLToPath(import.meta.url)), '../fixtures/v1/understory.json'),
 			'utf8'
@@ -67,8 +70,31 @@ describe('migrateProject', () => {
 		const result = parseProject(fixture)
 		if (!result.ok) throw new Error(result.issues[0].message)
 		expect(result.migratedFrom).toBe(1)
-		expect(result.project).toEqual({ ...input, schemaVersion: 2 })
-		expect(migrateProject(v1())).toEqual({ ok: true, from: 1, doc: { ...v1(), schemaVersion: 2 } })
+		expect(result.project).toEqual({ ...input, schemaVersion: PROJECT_SCHEMA_VERSION })
+		expect(migrateProject(v1())).toEqual({
+			ok: true,
+			from: 1,
+			doc: { ...v1(), schemaVersion: PROJECT_SCHEMA_VERSION },
+		})
+	})
+
+	it('migrates v2 to v3', () => {
+		const fixture = readFileSync(
+			resolve(dirname(fileURLToPath(import.meta.url)), '../fixtures/v2/sketch-layer.json'),
+			'utf8'
+		)
+		const input = JSON.parse(fixture)
+		const result = parseProject(fixture)
+		if (!result.ok) throw new Error(result.issues[0].message)
+		expect(result.migratedFrom).toBe(2)
+		expect(result.project).toEqual({ ...input, schemaVersion: 3 })
+		expect(result.project.customEffects).toBeUndefined()
+		const doc = deepFreeze({ format: 'mytw-project', schemaVersion: 2, name: 'Mid' })
+		expect(migrateProject(doc, { latest: 3 })).toEqual({
+			ok: true,
+			from: 2,
+			doc: { ...doc, schemaVersion: 3 },
+		})
 	})
 
 	it('runs the steps in order up to latest, on a copy', () => {
@@ -101,8 +127,16 @@ describe('migrateProject', () => {
 	})
 
 	it('returns the document unchanged when no migration is needed', () => {
-		const latest = deepFreeze({ format: 'mytw-project', schemaVersion: 2, name: 'Now' })
-		expect(migrateProject(latest)).toEqual({ ok: true, doc: latest, from: 2 })
+		const latest = deepFreeze({
+			format: 'mytw-project',
+			schemaVersion: PROJECT_SCHEMA_VERSION,
+			name: 'Now',
+		})
+		expect(migrateProject(latest)).toEqual({
+			ok: true,
+			doc: latest,
+			from: PROJECT_SCHEMA_VERSION,
+		})
 		const doc = v1()
 		const result = migrateProject(doc, { migrations: steps(), latest: 1 })
 		expect(result.ok && result.doc).toBe(doc)

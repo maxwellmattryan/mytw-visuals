@@ -9,8 +9,8 @@ import type {
 	RenderLayer,
 	Rgba,
 } from '@mytw/engine'
-import { assembleFragment, getEffect, uniformValues } from '@mytw/fx'
-import type { EffectDefinition } from '@mytw/fx'
+import { assembleFragment, createCustomEffect, getEffect, uniformValues } from '@mytw/fx'
+import type { CustomEffectResult, EffectDefinition } from '@mytw/fx'
 import type {
 	AnimatableNumber,
 	EffectInstance,
@@ -78,11 +78,19 @@ interface CompiledClip {
 }
 
 /**
- * Compiles a parsed project for the engine. Checks every effect against the effect bank and every
- * binding against the modulators, and precomputes each value's evaluator. Throws `SceneError`.
+ * Compiles a parsed project for the engine. Checks every effect against the effect bank, then the
+ * project's custom effects, and every binding against the modulators, and precomputes each value's
+ * evaluator. Throws `SceneError`.
  */
 export function compileScene(project: Project): Scene {
 	const definitions = new Map<string, EffectDefinition>()
+	// Built once per custom effect. Unused ones are never checked, so an invalid one only fails
+	// the scene when an instance uses it.
+	const customs = new Map<string, { index: number; result: CustomEffectResult }>()
+	project.customEffects?.forEach((custom, index) => {
+		if (!customs.has(custom.id))
+			customs.set(custom.id, { index, result: createCustomEffect(custom) })
+	})
 	const modulators = new Map(
 		Object.entries(project.modulators).map(([id, modulator]) => [id, modulatorFn(modulator)])
 	)
@@ -111,7 +119,16 @@ export function compileScene(project: Project): Scene {
 	const effectChain = (list: readonly EffectInstance[], path: string): CompiledEffect[] =>
 		list.map((instance, index) => {
 			const at = `${path}[${index}]`
-			const definition = getEffect(instance.effect)
+			const custom = customs.get(instance.effect)
+			// A custom effect that can't be built fails here, including one whose id a built-in
+			// owns, so the project never silently renders a different effect than it stores.
+			if (custom && !custom.result.ok)
+				throw new SceneError(
+					`customEffects[${custom.index}]`,
+					custom.result.errors[0]?.message ?? 'invalid custom effect'
+				)
+			const definition =
+				getEffect(instance.effect) ?? (custom?.result.ok ? custom.result.effect : null)
 			if (!definition)
 				throw new SceneError(`${at}.effect`, `unknown effect ${JSON.stringify(instance.effect)}`)
 			if (definition.version !== instance.version)
