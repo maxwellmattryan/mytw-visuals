@@ -145,6 +145,10 @@ const loopSafe = loopIssues(doc).length === 0 // every keyframe track ends where
 
 ## Export
 
+Engine content exports in the browser with [`@mytw/export`](packages/export/README.md): an H.264 MP4, a PNG sequence as a zip, or a PNG still, stepped frame by frame and with no dev server or ffmpeg. Open `/sketches/006-export-check/` to try it from `yarn build && yarn preview`.
+
+p5 sketches still record through the dev server. That capture route stays for p5 in development, as explained in [the capture route decision](packages/export/README.md#the-capture-route):
+
 - **Video**: Hold `R` to record, release to stop. A red dot shows while recording. Each frame is POSTed as a PNG to the dev server, which writes it to `~/Downloads/mytw-captures/<session>/`. Convert a session to MP4 by hand with `yarn convert <dir>`; the console prints the exact command. Recording needs `yarn dev`, and there is no fallback download. The capture endpoints only accept same-origin requests with a timestamp session name.
 - **One loop**: In a sketch with a transport, **Record loop** records exactly `loopFrames` frames from phase 0, then stops by itself.
 - **Screenshot**: Press `S` to save a PNG of the current frame.
@@ -218,6 +222,7 @@ packages/
   assets/         image loading by content hash into WebGL2 textures, no UI or p5 (@mytw/assets)
   engine/         UI-free WebGL2 renderer: frame data, render graph, effects (@mytw/engine)
   document/       document store: JSON commands, undo and redo, change notifications (@mytw/document)
+  export/         frame-accurate MP4, PNG sequence and still export in the browser (@mytw/export, see packages/export/README.md)
   engine/         timeline and modulation evaluator, no DOM (@mytw/engine)
 apps/
   sketchbook/     the sketchbook app and Vite root
