@@ -41,7 +41,7 @@ yarn test
 - Strict TypeScript with no `any` or type-check suppressions
 - Tabs, no semicolons, single quotes, trailing commas (es5)
 - Shared code imported through extensionless `@lib` specifiers, such as `@lib/layout`
-- Tests in `packages/lib/__tests__/`, `packages/schema/__tests__/`, `packages/panel/__tests__/` and `packages/engine/__tests__/`
+- Tests in `packages/lib/__tests__/`, `packages/schema/__tests__/`, `packages/panel/__tests__/`, `packages/engine/__tests__/` and `packages/assets/__tests__/`
 
 ## Commits
 

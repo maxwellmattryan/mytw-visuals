@@ -201,6 +201,12 @@ const unsubscribe = store.subscribe((change) => {
 
 Documents are never mutated. Each change builds a new root and keeps the identity of unchanged subtrees. `store.load(doc)` replaces the document and clears history.
 
+Load images for WebGL2 with `@mytw/assets`. Assets are addressed by the SHA-256 of their bytes, and textures use a top-left origin with v growing downward, so shaders need no Y flip. A missing or broken asset never throws: it loads as a magenta/black checker and reports the issue. The `005-asset-check` sketch is a manual check page for it.
+
+```ts
+import { ImageAssets, MemoryAssetSource } from '@mytw/assets'
+```
+
 ## Project Structure
 
 ```
@@ -208,6 +214,7 @@ packages/
   lib/            shared modules (math, colors, shaders, layout, image, capture), each with an index.ts barrel
   schema/         parameter definitions, constraints, clamping and validation, and the project format (@mytw/schema)
   panel/          Svelte 5 control panel generated from a schema, mounted with mountPanel (@mytw/panel)
+  assets/         image loading by content hash into WebGL2 textures, no UI or p5 (@mytw/assets)
   engine/         UI-free WebGL2 renderer: frame data, render graph, effects (@mytw/engine)
   document/       document store: JSON commands, undo and redo, change notifications (@mytw/document)
   engine/         timeline and modulation evaluator, no DOM (@mytw/engine)
