@@ -1,0 +1,3 @@
+# Approver addendum
+
+- **Start `pr.md` with `Title: <type>(<scope>): <description>`, a Conventional Commit, every time.** CI's Conventional Commit check (`scripts/check-pr-title.ts`) rejects any other PR title. The job title comes from the issue (`🛠 - …`) and fails it. Use one of these types: feat, fix, perf, revert, docs, style, refactor, test, build, ci, chore. Write the scope in lowercase, for example `feat(panel): save and restore parameter snapshots`. The title becomes the squash commit, which drives the changelog and version bump. Jobs 6 and 7 had no title line, failed CI and each cost a rework round that no code change could fix. Jobs 8, 9 and 10 had one and passed. (added 2026-11-08 · experiment: approver-conventional-pr-title · review-by: 2026-12-06)
