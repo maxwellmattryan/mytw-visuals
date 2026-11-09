@@ -5,6 +5,7 @@ import { createCapture } from '@lib/capture'
 import type { SketchCapture } from '@lib/capture'
 import { coverImage } from '@lib/image'
 import { LOOP_TARGETS, LoopClock } from '@lib/loop'
+import { glslChunks } from '@mytw/fx'
 import { mountPanel, mountTransport } from '@mytw/panel'
 import type { Panel } from '@mytw/panel'
 import type { ParamValues } from '@mytw/schema'
@@ -138,8 +139,6 @@ const FRAG_UNDERSTORY = `
 precision mediump float;
 varying vec2 vTexCoord;
 
-const float TAU = 6.28318530718;
-
 uniform sampler2D uTex;
 
 uniform float uBaseZoom;
@@ -178,51 +177,8 @@ uniform float uGhostFadeEnd;
 // hue rotation (radians) applied to the final composite
 uniform float uHueShift;
 
-vec2 rot(vec2 p, float a) {
-  float s = sin(a);
-  float c = cos(a);
-  return mat2(c, -s, s, c) * p;
-}
-
-// rotate hue about the gray (1,1,1) axis — preserves luminance, no clipping
-vec3 hueRotate(vec3 col, float angle) {
-  vec3 k = vec3(0.57735);
-  float c = cos(angle);
-  return col * c + cross(k, col) * sin(angle) + k * dot(k, col) * (1.0 - c);
-}
-
-// --- value-noise fbm (for caustic warp) ---
-float hash(vec2 p) {
-  p = fract(p * vec2(123.34, 456.21));
-  p += dot(p, p + 45.32);
-  return fract(p.x * p.y);
-}
-float vnoise(vec2 p) {
-  vec2 i = floor(p);
-  vec2 f = fract(p);
-  vec2 u = f * f * (3.0 - 2.0 * f);
-  float a = hash(i);
-  float b = hash(i + vec2(1.0, 0.0));
-  float c = hash(i + vec2(0.0, 1.0));
-  float d = hash(i + vec2(1.0, 1.0));
-  return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
-}
-float fbm(vec2 p) {
-  float v = 0.0;
-  float a = 0.5;
-  for (int i = 0; i < 4; i++) {
-    v += a * vnoise(p);
-    p *= 2.0;
-    a *= 0.5;
-  }
-  return v;
-}
-
-// 1.0 inside [0,1]^2, feathering to 0.0 at the borders
-float edgeMask(vec2 uv, float f) {
-  vec2 w = smoothstep(vec2(0.0), vec2(f), uv) * smoothstep(vec2(1.0), vec2(1.0) - f, uv);
-  return w.x * w.y;
-}
+// TAU, rot, value-noise fbm (caustic warp), hueRotate and edgeMask
+${glslChunks(['math', 'noise', 'color', 'mask'])}
 
 // frame on a center point, zoom, mirror (per-axis sign), rotate, scale, drift
 vec2 layerUv(vec2 uv, float zoom, vec2 mir, float angle, float scale, vec2 offset, vec2 center) {

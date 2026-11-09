@@ -5,6 +5,7 @@ import { createCapture } from '@lib/capture'
 import type { SketchCapture } from '@lib/capture'
 import { coverImage } from '@lib/image'
 import { LoopClock } from '@lib/loop'
+import { glslChunks } from '@mytw/fx'
 import { mountPanel, mountTransport } from '@mytw/panel'
 import type { Panel } from '@mytw/panel'
 import { loopSpeed, waveDisplacementSchema } from './params'
@@ -32,14 +33,7 @@ uniform float uVerticalPulseFreq;
 uniform float uVerticalPulseDepth;
 uniform float uHueShift;
 
-// Hue rotation via Rodrigues' formula around the (1,1,1) luma axis
-vec3 hueRotate(vec3 col, float angle) {
-  float c = cos(angle);
-  float s = sin(angle);
-  // rotation around normalized (1,1,1): R = c*I + (1-c)*kkT + s*K
-  vec3 k = vec3(0.57735); // 1/sqrt(3)
-  return col * c + cross(k, col) * s + k * dot(k, col) * (1.0 - c);
-}
+${glslChunks(['color'])}
 
 void main() {
   vec2 uv = vTexCoord;
