@@ -9,8 +9,10 @@
 	],
 	"scripts": {
 		"dev": "yarn workspace @mytw/sketchbook dev",
-		"build": "tsc --noEmit && tsc -p packages/schema && tsc -p packages/document && tsc -p packages/engine && tsc -p packages/export && tsc -p packages/scene && svelte-check --tsconfig ./packages/panel/tsconfig.json --fail-on-warnings && yarn workspace @mytw/sketchbook build",
+		"build": "tsc --noEmit && tsc -p packages/schema && tsc -p packages/document && tsc -p packages/engine && tsc -p packages/export && tsc -p packages/scene && svelte-check --tsconfig ./packages/panel/tsconfig.json --fail-on-warnings && yarn workspace @mytw/sketchbook build && svelte-check --tsconfig ./apps/editor/tsconfig.json --fail-on-warnings && yarn workspace @mytw/editor build",
 		"preview": "yarn workspace @mytw/sketchbook preview",
+		"editor": "yarn workspace @mytw/editor dev",
+		"editor:preview": "yarn workspace @mytw/editor preview",
 		"new": "yarn workspace @mytw/sketchbook new",
 		"lint": "eslint .",
 		"format": "prettier --write .",
