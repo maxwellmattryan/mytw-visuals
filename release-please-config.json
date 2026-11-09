@@ -21,6 +21,7 @@
 				{ "type": "json", "path": "packages/scene/package.json", "jsonpath": "$.version" },
 				{ "type": "json", "path": "packages/schema/package.json", "jsonpath": "$.version" },
 				{ "type": "json", "path": "packages/sketch/package.json", "jsonpath": "$.version" },
+				{ "type": "json", "path": "packages/stage/package.json", "jsonpath": "$.version" },
 				{ "type": "json", "path": "packages/storage/package.json", "jsonpath": "$.version" }
 			]
 		}
