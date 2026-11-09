@@ -3,15 +3,18 @@ import { MemoryAssetSource } from '@mytw/assets'
 import { createDocumentStore } from '@mytw/document'
 import type { DocumentValidation } from '@mytw/document'
 import { createRenderer } from '@mytw/engine'
+import { engineSource, exportStill } from '@mytw/export'
 import { applySolo, mountLayers } from '@mytw/layers'
 import { parseProject, validateProject } from '@mytw/schema'
 import type { Project } from '@mytw/schema'
 import { compileScene } from '@mytw/scene'
 import type { Scene } from '@mytw/scene'
+import { mountStage } from '@mytw/stage'
 import fixture from '../../../../packages/schema/fixtures/v1/understory.json'
 
 // The layers panel's host and manual test page: layers on the left, a live engine preview in the
 // centre, properties on the right. Every edit goes through one document store, so Mod+Z undoes it.
+// The centre is also the host for @mytw/stage: framing the selected layer on the canvas.
 
 const FIXTURE_IMAGE = '/images/mytw-002_base.png'
 
@@ -73,10 +76,14 @@ async function main() {
 		message.textContent = sceneError || renderError
 	}
 
-	const upload = async (hash: string) => {
+	const decode = async (hash: string): Promise<ImageBitmap> => {
 		const bytes = await assets.read(hash.slice('sha256:'.length))
 		if (!bytes) throw new Error(`No bytes for asset ${hash}`)
-		renderer.setImage(hash, await createImageBitmap(new Blob([new Uint8Array(bytes)])))
+		return createImageBitmap(new Blob([new Uint8Array(bytes)]))
+	}
+
+	const upload = async (hash: string) => {
+		renderer.setImage(hash, await decode(hash))
 		ready.add(hash)
 	}
 
@@ -110,11 +117,59 @@ async function main() {
 	store.subscribe(sync)
 	sync()
 
+	// Subscribed after `sync`, so the stage reads a fresh scene. Its gizmo, guides and warnings are
+	// drawn in an SVG beside the canvas, never into it.
+	mountStage({ layers: controller, stage, canvas, scene: () => scene })
+
+	// The preview's current frame, for Export still.
+	let currentFrame = 0
+
+	// Renders the current frame at output size in a separate renderer, the way exports do, so
+	// nothing the stage draws can reach it. Solo isn't applied, matching the layers panel.
+	const exportButton = element('export-still', HTMLButtonElement)
+	exportButton.addEventListener('click', () => {
+		const current = scene
+		if (!current) return
+		exportButton.disabled = true
+		const exportCanvas = document.createElement('canvas')
+		const exportRenderer = createRenderer(exportCanvas, {
+			width: current.width,
+			height: current.height,
+		})
+		const run = async () => {
+			for (const hash of current.images) exportRenderer.setImage(hash, await decode(hash))
+			for (const effect of current.effects) exportRenderer.registerEffect(effect)
+			const frameAt = (phase: number) =>
+				current.frameAt(Math.floor(phase * current.frames) % current.frames)
+			const blob = await exportStill(engineSource(exportRenderer, frameAt, exportCanvas), {
+				width: current.width,
+				height: current.height,
+				phase: currentFrame / current.frames,
+			})
+			const url = URL.createObjectURL(blob)
+			const link = document.createElement('a')
+			link.href = url
+			link.download = 'still.png'
+			link.click()
+			setTimeout(() => URL.revokeObjectURL(url), 1000)
+		}
+		run()
+			.catch((error: unknown) => {
+				renderError = error instanceof Error ? error.message : String(error)
+				showMessage()
+			})
+			.finally(() => {
+				exportRenderer.dispose()
+				exportButton.disabled = false
+			})
+	})
+
 	// Plays the loop in real time. Solo applies to the preview only.
 	const started = performance.now()
 	const loop = (now: number) => {
 		if (scene) {
 			const frame = Math.floor(((now - started) / 1000) * scene.fps) % scene.frames
+			currentFrame = frame
 			try {
 				const full = scene.frameAt(frame)
 				// Layers whose image is still decoding sit out, since the renderer doesn't know them yet.
