@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>007-project-home</title>
+		<style>
+			html,
+			body {
+				margin: 0;
+				padding: 0;
+				min-height: 100%;
+				background: #0b0b0b;
+				color: #eee;
+				font:
+					13px/1.4 system-ui,
+					-apple-system,
+					'Segoe UI',
+					sans-serif;
+			}
+
+			button,
+			input {
+				font: inherit;
+			}
+
+			.toolbar {
+				display: flex;
+				flex-wrap: wrap;
+				align-items: center;
+				gap: 8px;
+				max-width: 1100px;
+				margin: 0 auto;
+				padding: 12px 16px 0;
+				box-sizing: border-box;
+			}
+
+			.toolbar .title,
+			.toolbar h2 {
+				flex: 1;
+				margin: 0;
+				font-size: 16px;
+				font-weight: 600;
+			}
+
+			.toolbar button {
+				padding: 6px 12px;
+				border: 1px solid #333;
+				border-radius: 6px;
+				background: #222;
+				color: inherit;
+				cursor: pointer;
+			}
+
+			.toolbar button:disabled {
+				opacity: 0.5;
+				cursor: default;
+			}
+
+			.status {
+				min-width: 80px;
+				color: #999;
+			}
+
+			.status.error {
+				color: #ff8a8a;
+			}
+
+			.stage {
+				display: flex;
+				justify-content: center;
+				padding: 16px;
+			}
+
+			.stage canvas {
+				max-width: 100%;
+				max-height: calc(100vh - 120px);
+				object-fit: contain;
+				background: #000;
+			}
+
+			.page-error {
+				max-width: 1100px;
+				margin: 12px auto 0;
+				padding: 0 16px;
+				color: #ff8a8a;
+			}
+		</style>
+	</head>
+	<body>
+		<script type="module" src="./main.ts"></script>
+	</body>
+</html>

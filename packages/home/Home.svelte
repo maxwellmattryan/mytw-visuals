@@ -44,7 +44,7 @@
 	<div class="home">
 		<header>
 			<h1>Projects</h1>
-			{#if home.phase === 'ready'}
+			{#if home.phase === 'ready' && home.projects.length > 0}
 				<div class="actions">
 					<button type="button" class="primary" disabled={home.busy} onclick={() => model.create()}
 						>New project</button
@@ -257,6 +257,7 @@
 	}
 
 	.state .actions {
+		color: #eee;
 		justify-content: center;
 		margin-top: 16px;
 	}

@@ -14,11 +14,13 @@
 		"@mytw/engine": "*",
 		"@mytw/export": "*",
 		"@mytw/fx": "*",
+		"@mytw/home": "*",
 		"@mytw/lib": "*",
 		"@mytw/panel": "*",
 		"@mytw/scene": "*",
 		"@mytw/schema": "*",
 		"@mytw/sketch": "*",
+		"@mytw/storage": "*",
 		"ccapture.js-npmfixed": "1.1.0",
 		"p5": "1.11.3"
 	},

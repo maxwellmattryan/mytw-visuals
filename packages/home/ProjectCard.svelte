@@ -138,7 +138,9 @@
 	}
 
 	.open {
+		position: relative;
 		display: block;
+		overflow: hidden;
 		aspect-ratio: 1;
 		width: 100%;
 		padding: 0;
@@ -153,6 +155,8 @@
 	}
 
 	.open img {
+		position: absolute;
+		inset: 0;
 		display: block;
 		width: 100%;
 		height: 100%;
