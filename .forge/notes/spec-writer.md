@@ -1,0 +1,3 @@
+# Spec-writer addendum
+
+- **Check `origin/develop` before you treat a dependency as missing.** Your worktree may predate dependency jobs that merged since. Run `git fetch origin`, then look for the dependency's files with `git ls-tree -r --name-only origin/develop` or `git show origin/develop:<path>`. Write `questions.md` about an unmerged dependency only when its files really are absent there. When they exist, spec against the `origin/develop` versions. Jobs 7, 8, 9 and 10 spent about 39 spec-writer turns rediscovering merged work, and each parked on human input. (added 2026-11-08 · experiment: spec-writer-fetch-base · review-by: 2026-12-06)

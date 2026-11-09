@@ -8,8 +8,11 @@ const config: Config = {
 	moduleNameMapper: {
 		'^@lib$': '<rootDir>/packages/lib/index.ts',
 		'^@lib/(.*)$': '<rootDir>/packages/lib/$1',
+		'^@mytw/assets$': '<rootDir>/packages/assets/index.ts',
 		'^@mytw/schema$': '<rootDir>/packages/schema/index.ts',
 		'^@mytw/fx$': '<rootDir>/packages/fx/index.ts',
+		'^@mytw/engine$': '<rootDir>/packages/engine/index.ts',
+		'^@mytw/document$': '<rootDir>/packages/document/index.ts',
 	},
 }
 

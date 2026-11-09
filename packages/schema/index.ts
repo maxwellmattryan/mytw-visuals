@@ -4,6 +4,26 @@ export { clampValues } from './clamp'
 export { validate } from './validate'
 export { PARAMS_FORMAT, PARAMS_FORMAT_VERSION, parseValues, serializeValues } from './snapshot'
 export type { ParseValuesResult } from './snapshot'
+export { PROJECT_FORMAT, PROJECT_SCHEMA_VERSION } from './project'
+export type {
+	AnimatableNumber,
+	EffectInstance,
+	LayerMask,
+	LayerTransform,
+	ModBinding,
+	Modulator,
+	Project,
+	ProjectAsset,
+	ProjectClip,
+	ProjectIssue,
+	ProjectIssueCode,
+	ProjectLayer,
+	ProjectTrack,
+} from './project'
+export { parseProject, serializeProject, validateProject } from './project-io'
+export type { ParseProjectResult, ValidateProjectResult } from './project-io'
+export { MIGRATIONS, migrateProject } from './migrate'
+export type { Migration, MigrateProjectResult } from './migrate'
 export type {
 	BooleanParam,
 	ColorParam,

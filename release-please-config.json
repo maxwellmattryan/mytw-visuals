@@ -9,6 +9,9 @@
 			"package-name": "mytw-visuals",
 			"extra-files": [
 				{ "type": "json", "path": "apps/sketchbook/package.json", "jsonpath": "$.version" },
+				{ "type": "json", "path": "packages/assets/package.json", "jsonpath": "$.version" },
+				{ "type": "json", "path": "packages/document/package.json", "jsonpath": "$.version" },
+				{ "type": "json", "path": "packages/engine/package.json", "jsonpath": "$.version" },
 				{ "type": "json", "path": "packages/fx/package.json", "jsonpath": "$.version" },
 				{ "type": "json", "path": "packages/lib/package.json", "jsonpath": "$.version" },
 				{ "type": "json", "path": "packages/panel/package.json", "jsonpath": "$.version" },
