@@ -167,5 +167,17 @@ export function checkProject(project: Project): ProjectIssue[] {
 		for (const found of overlapIssues(track.clips, clips)) ctx.issues.push(found)
 	})
 	checkEffects(ctx, project.effects, 'effects')
+	// Custom effect ids are effect names, a namespace apart from element ids. A clash with a
+	// built-in effect is the scene's error, since the format doesn't know the bank.
+	const customIds = new Map<string, string>()
+	project.customEffects?.forEach((custom, index) => {
+		const at = childPath(indexPath('customEffects', index), 'id')
+		const earlier = customIds.get(custom.id)
+		if (earlier === undefined) customIds.set(custom.id, at)
+		else
+			ctx.issues.push(
+				issue(at, 'duplicate', `id ${JSON.stringify(custom.id)} is already used at ${earlier}`)
+			)
+	})
 	return ctx.issues
 }

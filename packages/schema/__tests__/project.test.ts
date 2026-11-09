@@ -12,6 +12,7 @@ import {
 } from '@mytw/schema'
 import type {
 	Project,
+	ProjectCustomEffect,
 	ProjectImageLayer,
 	ProjectIssue,
 	ProjectIssueCode,
@@ -49,6 +50,23 @@ const sketchLayer: ProjectSketchLayer = {
 		mirrorY: false,
 	},
 	effects: [],
+}
+
+/** A valid custom effect, added by `addCustom`. */
+const customEffect: ProjectCustomEffect = {
+	id: 'fade',
+	version: 1,
+	name: 'Fade',
+	glsl: 'vec4 effect(vec2 uv) {\n  return texture(uInput, uv) * (1.0 - uAmount);\n}',
+	params: { amount: { kind: 'number', label: 'Amount', default: 0.1, min: 0, max: 1 } },
+	chunks: ['math'],
+}
+
+/** Adds a copy of `customEffect` and returns it, so a row can change it. */
+function addCustom(doc: Project): ProjectCustomEffect {
+	const custom: ProjectCustomEffect = JSON.parse(JSON.stringify(customEffect))
+	doc.customEffects = [...(doc.customEffects ?? []), custom]
+	return custom
 }
 
 /** A small valid document that every variant starts from. */
@@ -299,6 +317,56 @@ describe('parseProject', () => {
 			(doc) => (addSketch(doc).seed = 0.5),
 			{ path: `${SKETCH}.seed`, code: 'integer' },
 		],
+		[
+			'customEffects that is not an array',
+			(doc) => Reflect.set(doc, 'customEffects', {}),
+			{ path: 'customEffects', code: 'type' },
+		],
+		[
+			'a custom effect with a bad id',
+			(doc) => (addCustom(doc).id = 'Fade_1'),
+			{
+				path: 'customEffects[0].id',
+				code: 'pattern',
+				message:
+					'customEffects[0].id: "Fade_1" is not an effect name (lowercase letters and digits, joined by -)',
+			},
+		],
+		[
+			'a custom effect version below 1',
+			(doc) => (addCustom(doc).version = 0),
+			{ path: 'customEffects[0].version', code: 'range' },
+		],
+		[
+			'a custom effect with an empty name',
+			(doc) => (addCustom(doc).name = ''),
+			{ path: 'customEffects[0].name', code: 'length' },
+		],
+		[
+			'a custom effect with GLSL over 100000 characters',
+			(doc) => (addCustom(doc).glsl = 'x'.repeat(100_001)),
+			{ path: 'customEffects[0].glsl', code: 'length' },
+		],
+		[
+			'a custom effect param definition that is not JSON',
+			(doc) => Reflect.set(addCustom(doc).params, 'amount', Number.NaN),
+			{ path: 'customEffects[0].params["amount"]', code: 'type' },
+		],
+		[
+			'a bad custom effect param key',
+			(doc) => (addCustom(doc).params['1x'] = {}),
+			{ path: 'customEffects[0].params["1x"]', code: 'pattern' },
+		],
+		[
+			'a bad custom effect chunk name',
+			(doc) => (addCustom(doc).chunks = ['Math']),
+			{ path: 'customEffects[0].chunks[0]', code: 'pattern' },
+		],
+		[
+			'a custom effect with a missing field',
+			(doc) => Reflect.deleteProperty(addCustom(doc), 'glsl'),
+			{ path: 'customEffects[0].glsl', code: 'missing' },
+		],
 	]
 
 	it.each(structural)('reports structural issues: %s', (_label, mutate, expected) => {
@@ -493,10 +561,34 @@ describe('parseProject', () => {
 			(doc) => (firstLayer(doc).mask = { kind: 'linear-gradient', from: [0.5, 0], to: [0.5, 0] }),
 			{ path: `${LAYER}.mask.to`, code: 'range' },
 		],
+		[
+			'a duplicate custom effect id',
+			(doc) => {
+				addCustom(doc)
+				addCustom(doc)
+			},
+			{
+				path: 'customEffects[1].id',
+				code: 'duplicate',
+				message: 'customEffects[1].id: id "fade" is already used at customEffects[0].id',
+			},
+		],
 	]
 
 	it.each(crossReference)('reports cross-reference issues: %s', (_label, mutate, expected) => {
 		expectIssue(withPatch(mutate), expected)
+	})
+
+	it('accepts custom effects, whose ids are apart from element ids', () => {
+		const doc = withPatch((patched) => {
+			// "vignette" is also the global effect instance's id and a built-in effect id.
+			addCustom(patched).id = 'vignette'
+			patched.customEffects?.push({ ...customEffect, extensions: { note: 'kept' } })
+		})
+		expect(issuesOf(doc)).toEqual([])
+		const result = parseProject(serializeProject(doc))
+		expect(result.ok && result.project.customEffects).toEqual(doc.customEffects)
+		expect(issuesOf(withPatch((patched) => (patched.customEffects = [])))).toEqual([])
 	})
 
 	it('allows clips that touch, unused assets and modulators, and seams outside loop mode', () => {
@@ -522,7 +614,11 @@ describe('parseProject', () => {
 			[withPatch((doc) => Reflect.set(doc, 'schemaVersion', 0)), 'schemaVersion', 'format'],
 			[withPatch((doc) => Reflect.set(doc, 'schemaVersion', 1.5)), 'schemaVersion', 'format'],
 			[withPatch((doc) => Reflect.set(doc, 'schemaVersion', '1')), 'schemaVersion', 'format'],
-			[withPatch((doc) => Reflect.set(doc, 'schemaVersion', 3)), 'schemaVersion', 'newer-version'],
+			[
+				withPatch((doc) => Reflect.set(doc, 'schemaVersion', PROJECT_SCHEMA_VERSION + 1)),
+				'schemaVersion',
+				'newer-version',
+			],
 		]
 		for (const [input, path, code] of cases) {
 			expect(issuesOf(input)).toEqual([expect.objectContaining({ path, code })])
@@ -530,11 +626,11 @@ describe('parseProject', () => {
 		expect(issuesOf('not json')).toEqual([
 			{ path: '', code: 'json', message: 'document: Not valid JSON' },
 		])
-		expect(issuesOf(withPatch((doc) => Reflect.set(doc, 'schemaVersion', 3)))).toEqual([
+		expect(issuesOf(withPatch((doc) => Reflect.set(doc, 'schemaVersion', 4)))).toEqual([
 			{
 				path: 'schemaVersion',
 				code: 'newer-version',
-				message: 'schemaVersion: saved by a newer version (v3), this app reads up to v2',
+				message: 'schemaVersion: saved by a newer version (v4), this app reads up to v3',
 			},
 		])
 	})
@@ -548,8 +644,15 @@ describe('parseProject', () => {
 		if (!parsed.ok) throw new Error(parsed.issues[0].message)
 		expect(parsed.migratedFrom).toBe(1)
 		const text = serializeProject(parsed.project)
-		expect(text.startsWith('{\n\t"format": "mytw-project",\n\t"schemaVersion": 2,')).toBe(true)
-		expect(JSON.parse(text)).toEqual({ ...JSON.parse(fixture), schemaVersion: 2 })
+		expect(
+			text.startsWith(
+				`{\n\t"format": "mytw-project",\n\t"schemaVersion": ${PROJECT_SCHEMA_VERSION},`
+			)
+		).toBe(true)
+		expect(JSON.parse(text)).toEqual({
+			...JSON.parse(fixture),
+			schemaVersion: PROJECT_SCHEMA_VERSION,
+		})
 		const again = parseProject(text)
 		expect(again.ok && again.project).toEqual(parsed.project)
 

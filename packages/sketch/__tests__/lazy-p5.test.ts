@@ -1,5 +1,6 @@
 import { describe, expect, it, jest } from '@jest/globals'
 
+import { PROJECT_SCHEMA_VERSION } from '@mytw/schema'
 import type { Project, ProjectLayer } from '@mytw/schema'
 
 let evaluations = 0
@@ -11,7 +12,7 @@ jest.unstable_mockModule('p5', () => {
 
 const minimal: Project = {
 	format: 'mytw-project',
-	schemaVersion: 2,
+	schemaVersion: PROJECT_SCHEMA_VERSION,
 	name: 'Lazy',
 	output: { width: 64, height: 64, fps: 30, background: '#000000' },
 	timeline: { mode: 'loop', frames: 30 },
