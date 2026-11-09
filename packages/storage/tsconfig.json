@@ -1,0 +1,19 @@
+{
+	"compilerOptions": {
+		"strict": true,
+		"noEmit": true,
+		"isolatedModules": true,
+		"skipLibCheck": true,
+		"target": "ESNext",
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"lib": ["ES2023", "DOM"],
+		"types": [],
+		"paths": {
+			"@mytw/assets": ["../assets/index.ts"],
+			"@mytw/document": ["../document/index.ts"],
+			"@mytw/schema": ["../schema/index.ts"]
+		}
+	},
+	"include": ["*.ts"]
+}

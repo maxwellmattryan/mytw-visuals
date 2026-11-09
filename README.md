@@ -175,6 +175,12 @@ A project is a versioned JSON document (`"format": "mytw-project"`) that describ
 
 `@mytw/layers` is the editor's layers panel and layer properties panel. It adds PNG, JPEG and WebP images as layers (from a file picker or by drag and drop), and duplicates, renames, reorders, hides, solos and deletes them. It edits each layer's opacity, blend, framing and mask with the same schema-driven controls as the parameter panel. Every edit is a `@mytw/document` command, so Mod+Z undoes it. To try it, start `yarn dev` and open `/sketches/007-layers/`, which shows the Understory project with layers on the left, a live preview in the centre and properties on the right. See [packages/layers/README.md](packages/layers/README.md) for how a host mounts it.
 
+## Projects on This Device
+
+Projects live in the browser's IndexedDB, with no login. [`@mytw/storage`](packages/storage/README.md) stores them behind a `ProjectStore` interface that a cloud backend could implement later. It saves edits automatically about half a second after they stop (at least every 5 seconds while they continue) and exports a project with its images as one `.mytw.zip` bundle that imports again anywhere. `@mytw/home` is the project list: create, open, rename, duplicate, export, import and delete.
+
+Browser data can be cleared, so export bundles of work you want to keep. The home screen says when the browser hasn't agreed to keep data and offers to ask it. To try it, start `yarn dev` and open `/sketches/007-project-home/`.
+
 ## TypeScript
 
 All code, including config files, is strict TypeScript with no `any` or type-check suppressions. `yarn build` runs `tsc --noEmit` over every workspace first, so a type error fails the build before Vite runs.
@@ -244,6 +250,8 @@ packages/
   document/       document store: JSON commands, undo and redo, change notifications (@mytw/document)
   export/         frame-accurate MP4, PNG sequence and still export in the browser (@mytw/export, see packages/export/README.md)
   layers/         layers panel and layer properties over the document store (@mytw/layers, see packages/layers/README.md)
+  storage/        projects in IndexedDB, autosave and .mytw.zip bundles, no UI (@mytw/storage, see packages/storage/README.md)
+  home/           Svelte 5 project list, mounted with mountProjectHome (@mytw/home)
 apps/
   sketchbook/     the sketchbook app and Vite root
     index.html    sketch picker page, served at /

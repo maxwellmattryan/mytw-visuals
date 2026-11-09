@@ -17,6 +17,8 @@ const config: Config = {
 		'^@mytw/scene$': '<rootDir>/packages/scene/index.ts',
 		'^@mytw/sketch$': '<rootDir>/packages/sketch/index.ts',
 		'^@mytw/layers$': '<rootDir>/packages/layers/index.ts',
+		'^@mytw/storage$': '<rootDir>/packages/storage/index.ts',
+		'^@mytw/home$': '<rootDir>/packages/home/index.ts',
 	},
 }
 
