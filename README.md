@@ -169,11 +169,13 @@ p5 sketches still record through the dev server. That capture route stays for p5
 
 ## Project Format
 
-A project is a versioned JSON document (`"format": "mytw-project"`) that describes a looping visual as data: output size, timeline, content-addressed image assets, modulators, tracks of clips and image or sketch layers, and effect chains. `@mytw/scene` maps a project onto engine frames (see [packages/scene/README.md](packages/scene/README.md)), and `/sketches/006-understory-compare/` renders the Understory fixture through the engine next to the p5 original. `@mytw/schema` reads, validates, migrates and writes it with `parseProject`, `validateProject`, `migrateProject` and `serializeProject`. See [docs/project-format.md](docs/project-format.md) for the full v2 specification, including how to add a version. Example documents live in `packages/schema/fixtures/`. To run the comparison, start `yarn dev` and open `/sketches/006-understory-compare/` (add `?run` for a console report, or use **Record side by side**); see [Comparison](docs/project-format.md#comparison).
+A project is a versioned JSON document (`"format": "mytw-project"`) that describes a looping visual as data: output size, timeline, content-addressed image assets, modulators, tracks of clips and image or sketch layers, effect chains, and custom GLSL effects. `@mytw/scene` maps a project onto engine frames (see [packages/scene/README.md](packages/scene/README.md)), and `/sketches/006-understory-compare/` renders the Understory fixture through the engine next to the p5 original. `@mytw/schema` reads, validates, migrates and writes it with `parseProject`, `validateProject`, `migrateProject` and `serializeProject`. See [docs/project-format.md](docs/project-format.md) for the full v3 specification, including how to add a version. Example documents live in `packages/schema/fixtures/`. To run the comparison, start `yarn dev` and open `/sketches/006-understory-compare/` (add `?run` for a console report, or use **Record side by side**); see [Comparison](docs/project-format.md#comparison).
 
 ## Layers Panel
 
 `@mytw/layers` is the editor's layers panel and layer properties panel. It adds PNG, JPEG and WebP images as layers (from a file picker or by drag and drop), and duplicates, renames, reorders, hides, solos and deletes them. It edits each layer's opacity, blend, framing and mask with the same schema-driven controls as the parameter panel. Every edit is a `@mytw/document` command, so Mod+Z undoes it. To try it, start `yarn dev` and open `/sketches/007-layers/`, which shows the Understory project with layers on the left, a live preview in the centre and properties on the right. See [packages/layers/README.md](packages/layers/README.md) for how a host mounts it.
+
+`@mytw/effects` is the editor's effects panel and effect properties panel. It browses and searches the effect bank, puts effects on the selected layer or on the whole composition, reorders, bypasses and removes them, and tunes them with controls built from each effect's schema, with a live hover preview on the stage. Custom GLSL effects live in the project, and their editor shows compile errors on the line they come from. An effect added to `packages/fx` appears with no editor changes. `/sketches/007-layers/` hosts it next to the layers panels. See [packages/effects/README.md](packages/effects/README.md) for how a host mounts it.
 
 ## Projects on This Device
 
@@ -250,6 +252,7 @@ packages/
   document/       document store: JSON commands, undo and redo, change notifications (@mytw/document)
   export/         frame-accurate MP4, PNG sequence and still export in the browser (@mytw/export, see packages/export/README.md)
   layers/         layers panel and layer properties over the document store (@mytw/layers, see packages/layers/README.md)
+  effects/        effects stack, effect browser and custom GLSL editor over the document store (@mytw/effects, see packages/effects/README.md)
   storage/        projects in IndexedDB, autosave and .mytw.zip bundles, no UI (@mytw/storage, see packages/storage/README.md)
   home/           Svelte 5 project list, mounted with mountProjectHome (@mytw/home)
 apps/
