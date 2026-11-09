@@ -153,6 +153,12 @@ Import the parameter schema from `@mytw/schema`, its package name. It has no DOM
 import { defineSchema, param } from '@mytw/schema'
 ```
 
+Load images for WebGL2 with `@mytw/assets`. Assets are addressed by the SHA-256 of their bytes, and textures use a top-left origin with v growing downward, so shaders need no Y flip. A missing or broken asset never throws: it loads as a magenta/black checker and reports the issue. The `004-asset-check` sketch is a manual check page for it.
+
+```ts
+import { ImageAssets, MemoryAssetSource } from '@mytw/assets'
+```
+
 ## Project Structure
 
 ```
@@ -160,6 +166,7 @@ packages/
   lib/            shared modules (math, colors, shaders, layout, image, capture), each with an index.ts barrel
   schema/         parameter definitions, constraints, clamping and validation (@mytw/schema)
   panel/          Svelte 5 control panel generated from a schema, mounted with mountPanel (@mytw/panel)
+  assets/         image loading by content hash into WebGL2 textures, no UI or p5 (@mytw/assets)
 apps/
   sketchbook/     the sketchbook app and Vite root
     index.html    sketch picker page, served at /
