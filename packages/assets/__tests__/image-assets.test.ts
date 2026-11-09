@@ -98,6 +98,24 @@ function fakeDecoder(size: { width: number; height: number }) {
 	return decoder satisfies ImageDecoder
 }
 
+/**
+ * Holds the decoder's next decode open until `finish` is called. `started` resolves once the
+ * decode begins, so a test can act mid-load without guessing how long hashing takes.
+ */
+function holdNextDecode(decoder: ReturnType<typeof fakeDecoder>) {
+	let finish: (image: DecodedImage) => void = () => {}
+	let begin: () => void = () => {}
+	const started = new Promise<void>((resolve) => (begin = resolve))
+	decoder.decode.mockImplementationOnce(
+		() =>
+			new Promise<DecodedImage>((resolve) => {
+				finish = resolve
+				begin()
+			})
+	)
+	return { started, finish: (image: DecodedImage) => finish(image) }
+}
+
 function u32be(value: number): number[] {
 	return [(value >>> 24) & 0xff, (value >>> 16) & 0xff, (value >>> 8) & 0xff, value & 0xff]
 }
@@ -415,26 +433,21 @@ describe('ImageAssets', () => {
 		expect(reloaded.texture).not.toBe(first.texture)
 
 		// A load that settles after release deletes its own texture.
-		let finish: (image: DecodedImage) => void = () => {}
-		decoder.decode.mockImplementationOnce(
-			() => new Promise<DecodedImage>((resolve) => (finish = resolve))
-		)
+		const lateDecode = holdNextDecode(decoder)
 		assets.release(hash)
 		const late = assets.load(hash)
-		await new Promise((resolve) => setTimeout(resolve, 0))
+		await lateDecode.started
 		assets.release(hash)
-		finish(fakeImage(300, 200))
+		lateDecode.finish(fakeImage(300, 200))
 		const lateAsset = await late
 		expect(gl.deleteTexture).toHaveBeenLastCalledWith(lateAsset.texture)
 		expect(assets.get(hash)).toBeUndefined()
 
 		// Dispose deletes every texture, including the placeholder, and later loads reject.
 		const kept = await assets.load(hash)
-		decoder.decode.mockImplementationOnce(
-			() => new Promise<DecodedImage>((resolve) => (finish = resolve))
-		)
+		const pendingDecode = holdNextDecode(decoder)
 		const pending = assets.load(await source.add(png(1, 1)))
-		await new Promise((resolve) => setTimeout(resolve, 0))
+		await pendingDecode.started
 		const pendingMissing = assets.load('c'.repeat(64))
 		gl.deleteTexture.mockClear()
 		assets.dispose()
@@ -445,7 +458,7 @@ describe('ImageAssets', () => {
 		await expect(assets.load(hash)).rejects.toThrow('ImageAssets is disposed')
 
 		// Loads settling after dispose delete their texture, including a re-created placeholder.
-		finish(fakeImage(1, 1))
+		pendingDecode.finish(fakeImage(1, 1))
 		const [pendingAsset, missingAsset] = await Promise.all([pending, pendingMissing])
 		expect(pendingAsset.status).toBe('ready')
 		expect(missingAsset.status).toBe('placeholder')
