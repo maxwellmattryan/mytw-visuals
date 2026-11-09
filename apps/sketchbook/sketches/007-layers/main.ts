@@ -28,6 +28,14 @@ function validate(doc: unknown): DocumentValidation {
 
 const isMac = /Mac|iPhone|iPad/.test(navigator.userAgent)
 
+/** Inputs that take no text, so undo still works right after dragging a slider or ticking a box. */
+const NON_TEXT_INPUTS = new Set(['range', 'checkbox', 'radio', 'button', 'color'])
+
+function isTextEntry(el: Element | null): boolean {
+	if (el instanceof HTMLInputElement && NON_TEXT_INPUTS.has(el.type)) return false
+	return isTypingTarget(el)
+}
+
 async function main() {
 	const message = element('stage-message', HTMLParagraphElement)
 	const canvas = element('canvas', HTMLCanvasElement)
@@ -131,7 +139,7 @@ async function main() {
 	requestAnimationFrame(loop)
 
 	window.addEventListener('keydown', (event) => {
-		if (isTypingTarget(document.activeElement)) return
+		if (isTextEntry(document.activeElement)) return
 		const mod = isMac ? event.metaKey : event.ctrlKey
 		if (!mod) return
 		const key = event.key.toLowerCase()
