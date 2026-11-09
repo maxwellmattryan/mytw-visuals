@@ -3,9 +3,9 @@ import { defineSchema, param } from '@mytw/schema'
 const TAU = Math.PI * 2
 
 const CENTER_Y_HELP =
-	'The buffer is drawn with a Y-flip. If this frames the wrong half, use 1 − value.'
+	'Measured up from the bottom of the image (the buffer is drawn with a Y-flip). A project uses 1 − value.'
 const FADE_HELP =
-	'The ghost is fully visible at the fade start and gone by the fade end (screen Y, 0 is the top). Swap the two to invert.'
+	'The ghost is fully visible at the fade start and gone by the fade end (screen Y, 0 is the bottom). Swap the two to invert.'
 
 /** Understory's parameters. Defaults reproduce the original hard-coded look. */
 export const understorySchema = defineSchema(

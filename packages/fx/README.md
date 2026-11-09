@@ -73,6 +73,8 @@ Each param becomes a uniform named `u` plus its key with the first letter capita
 
 `assembleFragment(effect)` returns `{ source, bodyStartLine }`: the full shader and the line where the effect's own GLSL starts. Its `main` writes `effect(vUv)` to the output. `EFFECT_VERTEX` is the matching vertex shader, with `in vec3 aPosition; in vec2 aTexCoord; out vec2 vUv;` and positions in 0–1.
 
+`uv` is the host's UV. In `@mytw/engine` it runs from (0,0) at the top-left, y down. `caustic-warp` lays its noise field out y-up, the way Understory's p5 original drew it, so it matches that sketch in the engine.
+
 Animate from `uPhase`, never from wall-clock time, and multiply it by whole cycle counts (`param.integer` or `loopSafe`) so the loop is seamless.
 
 ## Built-in effects

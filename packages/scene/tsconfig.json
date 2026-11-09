@@ -1,0 +1,16 @@
+{
+	"compilerOptions": {
+		"strict": true,
+		"noEmit": true,
+		"isolatedModules": true,
+		"target": "ESNext",
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"lib": ["ES2023", "DOM"],
+		"types": [],
+		"paths": {
+			"@lib/*": ["../lib/*"]
+		}
+	},
+	"include": ["*.ts"]
+}

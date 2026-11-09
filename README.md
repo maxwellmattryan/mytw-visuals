@@ -169,7 +169,7 @@ p5 sketches still record through the dev server. That capture route stays for p5
 
 ## Project Format
 
-A project is a versioned JSON document (`"format": "mytw-project"`) that describes a looping visual as data: output size, timeline, content-addressed image assets, modulators, tracks of clips and image or sketch layers, and effect chains. Nothing renders it yet. `@mytw/schema` reads, validates, migrates and writes it with `parseProject`, `validateProject`, `migrateProject` and `serializeProject`. See [docs/project-format.md](docs/project-format.md) for the full v2 specification, including how to add a version. Example documents live in `packages/schema/fixtures/`.
+A project is a versioned JSON document (`"format": "mytw-project"`) that describes a looping visual as data: output size, timeline, content-addressed image assets, modulators, tracks of clips and image or sketch layers, and effect chains. `@mytw/scene` maps a project onto engine frames (see [packages/scene/README.md](packages/scene/README.md)), and `/sketches/006-understory-compare/` renders the Understory fixture through the engine next to the p5 original. `@mytw/schema` reads, validates, migrates and writes it with `parseProject`, `validateProject`, `migrateProject` and `serializeProject`. See [docs/project-format.md](docs/project-format.md) for the full v2 specification, including how to add a version. Example documents live in `packages/schema/fixtures/`. To run the comparison, start `yarn dev` and open `/sketches/006-understory-compare/` (add `?run` for a console report, or use **Record side by side**); see [Comparison](docs/project-format.md#comparison).
 
 ## TypeScript
 
@@ -234,11 +234,11 @@ packages/
   panel/          Svelte 5 control panel generated from a schema, mounted with mountPanel (@mytw/panel)
   fx/             effects as data, built-in effects and the shared GLSL chunk library (@mytw/fx, see packages/fx/README.md)
   assets/         image loading by content hash into WebGL2 textures, no UI or p5 (@mytw/assets)
-  engine/         UI-free WebGL2 renderer: frame data, render graph, effects (@mytw/engine)
+  engine/         UI-free WebGL2 renderer, timeline and modulation evaluator: frame data, render graph, effects (@mytw/engine)
+  scene/          project document → engine frames, pure (@mytw/scene, see packages/scene/README.md)
   sketch/         p5 sketches as deterministic engine layers, p5 loaded on demand (@mytw/sketch, see packages/sketch/README.md)
   document/       document store: JSON commands, undo and redo, change notifications (@mytw/document)
   export/         frame-accurate MP4, PNG sequence and still export in the browser (@mytw/export, see packages/export/README.md)
-  engine/         timeline and modulation evaluator, no DOM (@mytw/engine)
 apps/
   sketchbook/     the sketchbook app and Vite root
     index.html    sketch picker page, served at /

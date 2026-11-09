@@ -47,8 +47,8 @@
 									"mod": [{ "modulator": "drift-x", "amount": 0.012, "mode": "add" }]
 								},
 								"centerY": {
-									"value": 0.72,
-									"mod": [{ "modulator": "drift-y", "amount": 0.012, "mode": "add" }]
+									"value": 0.28,
+									"mod": [{ "modulator": "drift-y", "amount": -0.012, "mode": "add" }]
 								},
 								"zoom": {
 									"value": 2,
@@ -75,8 +75,8 @@
 									"mod": [{ "modulator": "drift-x", "amount": 0.0096, "mode": "add" }]
 								},
 								"centerY": {
-									"value": 0.25,
-									"mod": [{ "modulator": "drift-y", "amount": 0.0096, "mode": "add" }]
+									"value": 0.75,
+									"mod": [{ "modulator": "drift-y", "amount": -0.0096, "mode": "add" }]
 								},
 								"zoom": {
 									"value": 3.4,
@@ -84,12 +84,12 @@
 								},
 								"rotation": {
 									"value": 0,
-									"mod": [{ "modulator": "ghost-wobble", "amount": 0.03, "mode": "add" }]
+									"mod": [{ "modulator": "ghost-wobble", "amount": -0.03, "mode": "add" }]
 								},
 								"mirrorX": true,
 								"mirrorY": false
 							},
-							"mask": { "kind": "linear-gradient", "from": [0.5, 0], "to": [0.5, 1] },
+							"mask": { "kind": "linear-gradient", "from": [0.5, 1], "to": [0.5, 0] },
 							"effects": []
 						}
 					]
