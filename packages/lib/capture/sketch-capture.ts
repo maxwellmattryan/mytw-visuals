@@ -22,6 +22,8 @@ export class SketchCapture {
 	canvas: HTMLCanvasElement
 	framerate: number
 	recording: boolean
+	/** Why the last `start()` failed, or `null` when it succeeded or hasn't run. */
+	startError: string | null
 	private _session: string | null
 	private _pending: number
 	private _total: number
@@ -35,6 +37,7 @@ export class SketchCapture {
 		this.canvas = canvas
 		this.framerate = options.framerate || 60
 		this.recording = false
+		this.startError = null
 		this._session = null
 		this._pending = 0
 		this._total = 0
@@ -66,6 +69,7 @@ export class SketchCapture {
 		await this.flushed()
 		if (this.recording) return
 		this._session = localTimestamp()
+		this.startError = null
 		this._pending = 0
 		this._total = 0
 		const limit = options.frameLimit
@@ -83,6 +87,8 @@ export class SketchCapture {
 			if (!result.ok) throw new Error(result.error)
 		} catch (err) {
 			console.error('[capture] Failed to start session — is the dev server running?', err)
+			const reason = err instanceof Error ? err.message : String(err)
+			this.startError = `Failed to start session — is the dev server running? (${reason})`
 			this._session = null
 			this._frameLimit = null
 			this._buffer = null

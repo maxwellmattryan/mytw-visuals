@@ -152,6 +152,7 @@ describe('SketchCapture frame limit', () => {
 		await cap.start({ frameLimit: 3 })
 		expect(cap.recording).toBe(false)
 		expect(cap.frameLimit).toBeNull()
+		expect(cap.startError).toMatch(/^Failed to start session — is the dev server running\?/)
 		cap.capture()
 		expect(frameUploads()).toEqual([])
 	})
