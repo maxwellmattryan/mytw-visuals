@@ -32,14 +32,26 @@ export function fitSize(fit: Fit, outputAspect: number, sourceAspect: number): [
  * 4. mirror flips the sign of `p.x` / `p.y`
  * 5. `s = p / S + center`, with `S` from `fitSize`
  *
- * Pass `out` to reuse an array instead of allocating one.
+ * Pass `out` to reuse an array instead of allocating one, or a `Float64Array` for full precision.
  */
 export function layerToSourceMatrix(
 	transform: LayerTransform | undefined,
 	output: Size,
 	source: Size,
-	out: Float32Array = new Float32Array(9)
-): Float32Array {
+	out?: Float32Array
+): Float32Array
+export function layerToSourceMatrix(
+	transform: LayerTransform | undefined,
+	output: Size,
+	source: Size,
+	out: Float64Array
+): Float64Array
+export function layerToSourceMatrix(
+	transform: LayerTransform | undefined,
+	output: Size,
+	source: Size,
+	out: Float32Array | Float64Array = new Float32Array(9)
+): Float32Array | Float64Array {
 	const t = transform ?? {}
 	const [cx, cy] = t.center ?? [0.5, 0.5]
 	const [ox, oy] = t.offset ?? [0, 0]
