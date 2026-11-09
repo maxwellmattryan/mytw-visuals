@@ -134,7 +134,7 @@ describe('compileScene', () => {
 			expect(base.transform).toEqual({
 				center: [
 					expect.closeTo(0.5 + 0.012 * sin(0), 12),
-					expect.closeTo(0.72 + 0.012 * sin(0.25), 12),
+					expect.closeTo(0.28 - 0.012 * sin(0.25), 12),
 				],
 				zoom: expect.closeTo(2 * breathe, 12),
 				rotation: 0,
@@ -150,17 +150,18 @@ describe('compileScene', () => {
 				opacity: 1,
 				blend: 'multiply',
 				edgeFeather: 0.06,
-				mask: { kind: 'linear', from: [0.5, 0], to: [0.5, 1] },
+				mask: { kind: 'linear', from: [0.5, 1], to: [0.5, 0] },
 				effects: [],
 			})
 			expect(ghost.transform).toEqual({
 				center: [
 					expect.closeTo(0.2 + 0.0096 * sin(0), 12),
-					expect.closeTo(0.25 + 0.0096 * sin(0.25), 12),
+					expect.closeTo(0.75 - 0.0096 * sin(0.25), 12),
 				],
 				zoom: expect.closeTo(3.4 * breathe, 12),
-				// A single-axis mirror flips the angle for the engine (see AC3).
-				rotation: expect.closeTo(-(0.03 * sin(0)), 12),
+				// The fixture's wobble is -0.03·m, and the single-axis mirror flips the angle for
+				// the engine (see AC3), so the engine sees +0.03·m.
+				rotation: expect.closeTo(0.03 * sin(0), 12),
 				mirrorX: true,
 				mirrorY: false,
 				fit: 'cover',

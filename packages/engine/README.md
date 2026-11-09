@@ -125,7 +125,7 @@ A layer is skipped when `visible` is `false` or `opacity <= 0`.
 
 A mask gives a value `m` in [0,1] that multiplies the layer's premultiplied colour, together with `opacity`. `invert` uses `1 - m`.
 
-- **linear**: `t = clamp(dot(u - from, to - from) / dot(to - from, to - from), 0, 1)`, then `m = 1 - smoothstep(0, 1, t)`. It is 1 at `from` and 0 at `to`. Understory's ghost fade is `{ kind: 'linear', from: [0.5, fadeStart], to: [0.5, fadeEnd] }` on a multiply layer.
+- **linear**: `t = clamp(dot(u - from, to - from) / dot(to - from, to - from), 0, 1)`, then `m = 1 - smoothstep(0, 1, t)`. It is 1 at `from` and 0 at `to`. Understory's ghost fade is `{ kind: 'linear', from: [0.5, 1 - fadeStart], to: [0.5, 1 - fadeEnd] }` on a multiply layer (the sketch measures its fade from the bottom).
 - **radial**: `d = length((u - center) * (Ao, 1))`, then `m = 1 - smoothstep(inner, outer, d)`.
 - **image**: the image's luminance (`dot(rgb, (0.2126, 0.7152, 0.0722))` on un-premultiplied colour) or alpha, sampled at `u`. The image is stretched over the output.
 

@@ -90,19 +90,24 @@ describe('Understory project fixture', () => {
 			expect(periodic(key).phase).toBeCloseTo(phase, 10)
 		}
 
+		// The sketch's shader UV is y-up (p5's vTexCoord is 0 at the bottom) and it samples a
+		// buffer drawn with a Y-flip, while the format is y-down in both canvas and source. So
+		// the fixture uses 1 − y for centers and masks, negates the y drift, and negates the
+		// ghost's rotation (its rot() turns the other way in y-down space). 006-understory-compare
+		// confirmed each flip against the p5 original.
 		const base = layer('base')
 		expect(base).toMatchObject({ name: 'Base', blend: 'normal', opacity: 1, visible: true })
 		expect(base.feather).toBeCloseTo(d.feather, 10)
 		expect(base.effects).toEqual([])
 		expect(base.mask).toBeUndefined()
 		expect(valueOf(base.transform.centerX)).toBeCloseTo(d.baseCenterX, 10)
-		expect(valueOf(base.transform.centerY)).toBeCloseTo(d.baseCenterY, 10)
+		expect(valueOf(base.transform.centerY)).toBeCloseTo(1 - d.baseCenterY, 10)
 		expect(valueOf(base.transform.zoom)).toBeCloseTo(d.baseZoom, 10)
 		expect(base.transform.rotation).toBe(0)
 		expect(base.transform.mirrorX).toBe(d.baseMirrorX)
 		expect(base.transform.mirrorY).toBe(d.baseMirrorY)
 		expectBinding(base.transform.centerX, 'drift-x', d.driftAmp, 'add')
-		expectBinding(base.transform.centerY, 'drift-y', d.driftAmp, 'add')
+		expectBinding(base.transform.centerY, 'drift-y', -d.driftAmp, 'add')
 		expectBinding(base.transform.zoom, 'breathe', d.breatheAmp, 'multiply')
 
 		const ghost = layer('ghost')
@@ -113,19 +118,19 @@ describe('Understory project fixture', () => {
 		expect(ghost.effects).toEqual([])
 		expect(ghost.mask).toEqual({
 			kind: 'linear-gradient',
-			from: [0.5, d.ghostFadeStart],
-			to: [0.5, d.ghostFadeEnd],
+			from: [0.5, 1 - d.ghostFadeStart],
+			to: [0.5, 1 - d.ghostFadeEnd],
 		})
 		expect(valueOf(ghost.transform.centerX)).toBeCloseTo(d.ghostCenterX, 10)
-		expect(valueOf(ghost.transform.centerY)).toBeCloseTo(d.ghostCenterY, 10)
+		expect(valueOf(ghost.transform.centerY)).toBeCloseTo(1 - d.ghostCenterY, 10)
 		expect(valueOf(ghost.transform.zoom)).toBeCloseTo(d.ghostZoom, 10)
-		expect(valueOf(ghost.transform.rotation)).toBeCloseTo(d.ghostTilt, 10)
+		expect(valueOf(ghost.transform.rotation)).toBeCloseTo(-d.ghostTilt, 10)
 		expect(ghost.transform.mirrorX).toBe(d.ghostMirrorX)
 		expect(ghost.transform.mirrorY).toBe(d.ghostMirrorY)
 		expectBinding(ghost.transform.centerX, 'drift-x', ghostDrift, 'add')
-		expectBinding(ghost.transform.centerY, 'drift-y', ghostDrift, 'add')
+		expectBinding(ghost.transform.centerY, 'drift-y', -ghostDrift, 'add')
 		expectBinding(ghost.transform.zoom, 'breathe', d.breatheAmp, 'multiply')
-		expectBinding(ghost.transform.rotation, 'ghost-wobble', d.ghostWobbleAmp, 'add')
+		expectBinding(ghost.transform.rotation, 'ghost-wobble', -d.ghostWobbleAmp, 'add')
 
 		expect(project.effects.map((effect) => [effect.id, effect.effect])).toEqual([
 			['caustic', 'caustic-warp'],
