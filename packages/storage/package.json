@@ -1,0 +1,15 @@
+{
+	"name": "@mytw/storage",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./index.ts"
+	},
+	"dependencies": {
+		"@mytw/assets": "*",
+		"@mytw/document": "*",
+		"@mytw/schema": "*",
+		"fflate": "0.8.3"
+	}
+}
