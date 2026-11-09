@@ -10,12 +10,46 @@ import {
 	serializeProject,
 	validateProject,
 } from '@mytw/schema'
-import type { Project, ProjectIssue, ProjectIssueCode } from '@mytw/schema'
+import type {
+	Project,
+	ProjectImageLayer,
+	ProjectIssue,
+	ProjectIssueCode,
+	ProjectSketchLayer,
+} from '@mytw/schema'
 
 const HASH = `sha256:${'ab'.repeat(32)}`
 const OTHER_HASH = `sha256:${'cd'.repeat(32)}`
 const UPPER_HASH = `sha256:${'AB'.repeat(32)}`
 const LAYER = 'tracks[0].clips[0].layers[0]'
+const SKETCH = 'tracks[0].clips[0].layers[1]'
+
+/** A valid sketch layer, added after the image layer by `addSketch`. */
+const sketchLayer: ProjectSketchLayer = {
+	id: 'orbits',
+	kind: 'sketch',
+	sketch: 'basic-orbits',
+	version: 1,
+	seed: 7,
+	params: {
+		format: 'mytw-params',
+		version: 1,
+		values: { count: 12, size: 0.5, showBackground: false, background: '#000000', at: [0, 1] },
+	},
+	visible: true,
+	opacity: 1,
+	blend: 'screen',
+	feather: 0,
+	transform: {
+		centerX: 0.5,
+		centerY: 0.5,
+		zoom: 1,
+		rotation: 0,
+		mirrorX: false,
+		mirrorY: false,
+	},
+	effects: [],
+}
 
 /** A small valid document that every variant starts from. */
 const base: Project = {
@@ -99,8 +133,17 @@ function withPatch(mutate: (doc: Project) => void): Project {
 	return doc
 }
 
-function firstLayer(doc: Project) {
-	return doc.tracks[0].clips[0].layers[0]
+function firstLayer(doc: Project): ProjectImageLayer {
+	const layer = doc.tracks[0].clips[0].layers[0]
+	if (layer.kind !== 'image') throw new Error('expected the image layer first')
+	return layer
+}
+
+/** Adds a copy of `sketchLayer` and returns it, so a row can change it. */
+function addSketch(doc: Project): ProjectSketchLayer {
+	const layer: ProjectSketchLayer = JSON.parse(JSON.stringify(sketchLayer))
+	doc.tracks[0].clips[0].layers.push(layer)
+	return layer
 }
 
 function issuesOf(input: unknown): ProjectIssue[] {
@@ -213,10 +256,62 @@ describe('parseProject', () => {
 			(doc) => Reflect.set(doc.effects[0].params, 'amount', null),
 			{ path: 'effects[0].params["amount"]', code: 'type' },
 		],
+		[
+			'a sketch layer with an asset',
+			(doc) => Reflect.set(addSketch(doc), 'asset', HASH),
+			{ path: `${SKETCH}.asset`, code: 'unknown' },
+		],
+		[
+			'a bad sketch name',
+			(doc) => (addSketch(doc).sketch = 'Basic_Orbits'),
+			{
+				path: `${SKETCH}.sketch`,
+				code: 'pattern',
+				message: `${SKETCH}.sketch: "Basic_Orbits" is not a sketch id (lowercase letters and digits, joined by -)`,
+			},
+		],
+		[
+			'a sketch version below 1',
+			(doc) => (addSketch(doc).version = 0),
+			{ path: `${SKETCH}.version`, code: 'range' },
+		],
+		[
+			'a sketch params envelope of another format',
+			(doc) => Reflect.set(addSketch(doc).params, 'format', 'other'),
+			{ path: `${SKETCH}.params.format`, code: 'option' },
+		],
+		[
+			'a sketch param value that is an object',
+			(doc) => Reflect.set(addSketch(doc).params.values, 'count', { value: 1, mod: [] }),
+			{
+				path: `${SKETCH}.params.values["count"]`,
+				code: 'type',
+				message: `${SKETCH}.params.values["count"]: expected a number, boolean, string or [number, number]`,
+			},
+		],
+		[
+			'a bad sketch param key',
+			(doc) => (addSketch(doc).params.values['1x'] = 1),
+			{ path: `${SKETCH}.params.values["1x"]`, code: 'pattern' },
+		],
+		[
+			'a non-integer sketch seed',
+			(doc) => (addSketch(doc).seed = 0.5),
+			{ path: `${SKETCH}.seed`, code: 'integer' },
+		],
 	]
 
 	it.each(structural)('reports structural issues: %s', (_label, mutate, expected) => {
 		expectIssue(withPatch(mutate), expected)
+	})
+
+	it('accepts a sketch layer next to an image layer', () => {
+		const doc = withPatch((patched) => {
+			addSketch(patched)
+		})
+		expect(issuesOf(doc)).toEqual([])
+		const result = parseProject(serializeProject(doc))
+		expect(result.ok && result.project.tracks[0].clips[0].layers[1]).toEqual(sketchLayer)
 	})
 
 	it('reports structural issues once per value, in document order', () => {
@@ -427,7 +522,7 @@ describe('parseProject', () => {
 			[withPatch((doc) => Reflect.set(doc, 'schemaVersion', 0)), 'schemaVersion', 'format'],
 			[withPatch((doc) => Reflect.set(doc, 'schemaVersion', 1.5)), 'schemaVersion', 'format'],
 			[withPatch((doc) => Reflect.set(doc, 'schemaVersion', '1')), 'schemaVersion', 'format'],
-			[withPatch((doc) => Reflect.set(doc, 'schemaVersion', 2)), 'schemaVersion', 'newer-version'],
+			[withPatch((doc) => Reflect.set(doc, 'schemaVersion', 3)), 'schemaVersion', 'newer-version'],
 		]
 		for (const [input, path, code] of cases) {
 			expect(issuesOf(input)).toEqual([expect.objectContaining({ path, code })])
@@ -435,11 +530,11 @@ describe('parseProject', () => {
 		expect(issuesOf('not json')).toEqual([
 			{ path: '', code: 'json', message: 'document: Not valid JSON' },
 		])
-		expect(issuesOf(withPatch((doc) => Reflect.set(doc, 'schemaVersion', 2)))).toEqual([
+		expect(issuesOf(withPatch((doc) => Reflect.set(doc, 'schemaVersion', 3)))).toEqual([
 			{
 				path: 'schemaVersion',
 				code: 'newer-version',
-				message: 'schemaVersion: saved by a newer version (v2), this app reads up to v1',
+				message: 'schemaVersion: saved by a newer version (v3), this app reads up to v2',
 			},
 		])
 	})
@@ -451,9 +546,10 @@ describe('parseProject', () => {
 		)
 		const parsed = parseProject(fixture)
 		if (!parsed.ok) throw new Error(parsed.issues[0].message)
+		expect(parsed.migratedFrom).toBe(1)
 		const text = serializeProject(parsed.project)
-		expect(text.startsWith('{\n\t"format": "mytw-project",\n\t"schemaVersion": 1,')).toBe(true)
-		expect(JSON.parse(text)).toEqual(JSON.parse(fixture))
+		expect(text.startsWith('{\n\t"format": "mytw-project",\n\t"schemaVersion": 2,')).toBe(true)
+		expect(JSON.parse(text)).toEqual({ ...JSON.parse(fixture), schemaVersion: 2 })
 		const again = parseProject(text)
 		expect(again.ok && again.project).toEqual(parsed.project)
 

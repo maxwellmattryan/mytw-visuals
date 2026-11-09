@@ -50,6 +50,29 @@ export default [
 		},
 	},
 	{
+		// p5 is large, so it loads only for projects with sketch layers, through runtime.ts.
+		files: ['packages/sketch/**/*.ts'],
+		ignores: ['packages/sketch/runtime.ts', 'packages/sketch/__tests__/**'],
+		rules: {
+			// The typescript-eslint rule, because only it can allow `import type p5 from 'p5'`.
+			'@typescript-eslint/no-restricted-imports': [
+				'error',
+				{
+					paths: [
+						{
+							name: 'p5',
+							allowTypeImports: true,
+							message:
+								'Load p5 through loadSketchRuntime so projects without sketch layers never fetch it.',
+						},
+						'svelte',
+						'@mytw/panel',
+					],
+				},
+			],
+		},
+	},
+	{
 		files: ['**/__tests__/**/*.ts'],
 		languageOptions: {
 			globals: {

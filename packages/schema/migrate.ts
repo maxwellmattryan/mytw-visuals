@@ -13,8 +13,18 @@ export interface Migration {
 	migrate(doc: Record<string, unknown>): Record<string, unknown>
 }
 
-/** Every step from v1 up to `PROJECT_SCHEMA_VERSION`. Empty while v1 is the latest. */
-export const MIGRATIONS: readonly Migration[] = []
+/** Every step from v1 up to `PROJECT_SCHEMA_VERSION`. */
+export const MIGRATIONS: readonly Migration[] = [
+	{
+		from: 1,
+		to: 2,
+		description: 'Adds the sketch layer kind',
+		migrate: (doc) => {
+			doc.schemaVersion = 2
+			return doc
+		},
+	},
+]
 
 export type MigrateProjectResult =
 	| { ok: true; doc: Record<string, unknown>; from: number }

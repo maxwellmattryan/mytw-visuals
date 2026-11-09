@@ -1,6 +1,9 @@
 import { describe, expect, it } from '@jest/globals'
+import { readFileSync } from 'fs'
+import { dirname, resolve } from 'path'
+import { fileURLToPath } from 'url'
 
-import { MIGRATIONS, migrateProject } from '@mytw/schema'
+import { MIGRATIONS, migrateProject, parseProject } from '@mytw/schema'
 import type { Migration } from '@mytw/schema'
 
 type Doc = Record<string, unknown>
@@ -54,8 +57,18 @@ function migrationMessage(doc: Doc, migrations: Migration[], latest: number) {
 }
 
 describe('migrateProject', () => {
-	it('ships no migrations while v1 is the latest', () => {
-		expect(MIGRATIONS).toEqual([])
+	it('migrates v1 to v2 by bumping the version only', () => {
+		expect(MIGRATIONS.map(({ from, to }) => [from, to])).toEqual([[1, 2]])
+		const fixture = readFileSync(
+			resolve(dirname(fileURLToPath(import.meta.url)), '../fixtures/v1/understory.json'),
+			'utf8'
+		)
+		const input = JSON.parse(fixture)
+		const result = parseProject(fixture)
+		if (!result.ok) throw new Error(result.issues[0].message)
+		expect(result.migratedFrom).toBe(1)
+		expect(result.project).toEqual({ ...input, schemaVersion: 2 })
+		expect(migrateProject(v1())).toEqual({ ok: true, from: 1, doc: { ...v1(), schemaVersion: 2 } })
 	})
 
 	it('runs the steps in order up to latest, on a copy', () => {
@@ -88,8 +101,9 @@ describe('migrateProject', () => {
 	})
 
 	it('returns the document unchanged when no migration is needed', () => {
+		const latest = deepFreeze({ format: 'mytw-project', schemaVersion: 2, name: 'Now' })
+		expect(migrateProject(latest)).toEqual({ ok: true, doc: latest, from: 2 })
 		const doc = v1()
-		expect(migrateProject(doc)).toEqual({ ok: true, doc, from: 1 })
 		const result = migrateProject(doc, { migrations: steps(), latest: 1 })
 		expect(result.ok && result.doc).toBe(doc)
 		expect(result.ok && result.from).toBe(1)

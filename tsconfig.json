@@ -20,6 +20,7 @@
 			"@mytw/fx": ["./packages/fx/index.ts"],
 			"@mytw/panel": ["./packages/panel/index.ts"],
 			"@mytw/engine": ["./packages/engine/index.ts"],
+			"@mytw/sketch": ["./packages/sketch/index.ts"],
 			"@mytw/export": ["./packages/export/index.ts"]
 		}
 	},

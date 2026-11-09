@@ -143,6 +143,20 @@ const state = evaluate(doc, clock.phase) // { 'base.zoom': 1.02 }
 const loopSafe = loopIssues(doc).length === 0 // every keyframe track ends where it starts
 ```
 
+## Sketch Layers
+
+`@mytw/sketch` turns a p5 sketch into a layer the engine composites like an image, with blends, masks and effects. The engine supplies the frame (`t`, `frame`, `fps`) and the runtime seeds `p.random` and `p.noise` before every draw, so the same frame always gives the same pixels. p5 loads only when a project has a sketch layer:
+
+```ts
+import { loadSketchRuntime } from '@mytw/sketch'
+
+const runtime = await loadSketchRuntime()
+const sketch = await runtime.createSketchLayer(orbits, { width: 1080, height: 1920, seed: 7 })
+renderer.setImage('orbits', sketch.render({ frame, frames: 225, fps: 30 }))
+```
+
+See [packages/sketch/README.md](packages/sketch/README.md) for the determinism rules, and `apps/sketchbook/sketches/006-sketch-layer/` for a demo.
+
 ## Export
 
 Engine content exports in the browser with [`@mytw/export`](packages/export/README.md): an H.264 MP4, a PNG sequence as a zip, or a PNG still, stepped frame by frame and with no dev server or ffmpeg. Open `/sketches/006-export-check/` to try it from `yarn build && yarn preview`.
@@ -155,7 +169,7 @@ p5 sketches still record through the dev server. That capture route stays for p5
 
 ## Project Format
 
-A project is a versioned JSON document (`"format": "mytw-project"`) that describes a looping visual as data: output size, timeline, content-addressed image assets, modulators, tracks of clips and layers, and effect chains. Nothing renders it yet. `@mytw/schema` reads, validates, migrates and writes it with `parseProject`, `validateProject`, `migrateProject` and `serializeProject`. See [docs/project-format.md](docs/project-format.md) for the full v1 specification, including how to add a version. Example documents live in `packages/schema/fixtures/`.
+A project is a versioned JSON document (`"format": "mytw-project"`) that describes a looping visual as data: output size, timeline, content-addressed image assets, modulators, tracks of clips and image or sketch layers, and effect chains. Nothing renders it yet. `@mytw/schema` reads, validates, migrates and writes it with `parseProject`, `validateProject`, `migrateProject` and `serializeProject`. See [docs/project-format.md](docs/project-format.md) for the full v2 specification, including how to add a version. Example documents live in `packages/schema/fixtures/`.
 
 ## TypeScript
 
@@ -221,6 +235,7 @@ packages/
   fx/             effects as data, built-in effects and the shared GLSL chunk library (@mytw/fx, see packages/fx/README.md)
   assets/         image loading by content hash into WebGL2 textures, no UI or p5 (@mytw/assets)
   engine/         UI-free WebGL2 renderer: frame data, render graph, effects (@mytw/engine)
+  sketch/         p5 sketches as deterministic engine layers, p5 loaded on demand (@mytw/sketch, see packages/sketch/README.md)
   document/       document store: JSON commands, undo and redo, change notifications (@mytw/document)
   export/         frame-accurate MP4, PNG sequence and still export in the browser (@mytw/export, see packages/export/README.md)
   engine/         timeline and modulation evaluator, no DOM (@mytw/engine)
